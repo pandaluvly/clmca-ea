@@ -36,14 +36,10 @@ input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số d
 input group "3. Giờ server của sàn · Broker server time"
 input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
 input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
-input group "4. Giờ giao dịch · Trading hours"
-input bool             InpUseSessionFilter = true;  // Chỉ vào lệnh trong khung giờ dưới · Only trade in hours below
-input int              InpSessionStartUtc = 7;      // Từ giờ (UTC) · From hour (UTC)
-input int              InpSessionEndUtc   = 19;     // Đến giờ (UTC), tính cả giờ này · To hour (UTC), inclusive
-input group "5. An toàn tài khoản · Account safety"
+input group "4. An toàn tài khoản · Account safety"
 input string           InpAllowedLogins  = "";      // Chỉ chạy trên số tài khoản này (cách nhau dấu phẩy; trống = mọi tài khoản) · Allowed account numbers
 input long             InpMagic          = 0;       // Mã nhận diện lệnh; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
-input group "6. Nâng cao, không cần đổi · Advanced"
+input group "5. Nâng cao, không cần đổi · Advanced"
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
 input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
 input int              InpHistoryM15Bars = 12000;   // Số nến M15 dùng để tính chỉ báo · M15 bars for indicators
@@ -512,8 +508,7 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
      {
       reasons = Fsr_SignalReasons(Fsr_HourOf(t[i]), adx[i], dragon, slope, ready, trend,
                                   l[i - 1], e34h[i - 1], e89[i - 1], o[i], c[i], e34h[i], e89[i],
-                                  InpUseSessionFilter ? InpSessionStartUtc : 0,
-                                  InpUseSessionFilter ? InpSessionEndUtc : 23,
+                                  FSR_HOUR_FIRST, FSR_HOUR_LAST,   // khung giờ CỐ ĐỊNH theo chiến lược (7–19 UTC), không cho đổi
                                   min_dragon, min_slope);
       // C_V1/D_V1: Fsr5_Pullback = đúng nhánh gốc ⇒ bitmask y như EA 4 chế độ. P1b/P2: nới theo §2.
       reasons = Fsr_ApplyPullback(reasons, Fsr5_Pullback(g_mode, l, e34h, e89, atr, i));
@@ -981,10 +976,9 @@ int OnInit()
    long mode_magic[8] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515};
    g_magic = InpMagic != 0 ? InpMagic : mode_magic[g_mode];
    if((InpRiskMode == FSR_RISK_USD && !(InpRiskUsd > 0.0))
-      || (InpRiskMode == FSR_RISK_PERCENT && !(InpRiskPercent > 0.0 && InpRiskPercent <= 5.0)) || InpHistoryM15Bars < 9000
-      || InpSessionStartUtc < 0 || InpSessionStartUtc > 23 || InpSessionEndUtc < 0 || InpSessionEndUtc > 23)
+      || (InpRiskMode == FSR_RISK_PERCENT && !(InpRiskPercent > 0.0 && InpRiskPercent <= 5.0)) || InpHistoryM15Bars < 9000)
      {
-      Print("[FSR] ⛔ InpRiskUsd > 0, 0 < InpRiskPercent ≤ 5, InpHistoryM15Bars ≥ 9000, giờ phiên 0..23.");
+      Print("[FSR] ⛔ InpRiskUsd > 0, 0 < InpRiskPercent ≤ 5, InpHistoryM15Bars ≥ 9000.");
       return INIT_FAILED;
      }
    // Kiểm quy đổi giờ server → UTC khớp đồng hồ terminal (sai ⇒ lệch khung giờ 7–19 và biên H4).
