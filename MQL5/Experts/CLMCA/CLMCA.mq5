@@ -6,7 +6,13 @@
 //+------------------------------------------------------------------+
 #property strict
 #property version   "1.00"
-#property description "Step-R v1 (ATR) — 5 modes C_V1/P1b/P2/D_V1/L07S for Strategy Tester / demo."
+#property copyright   "Có Làm Mới Có Ăn · Panda"
+#property link        "https://clmca.pandify.io"
+#property description "EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
+#property description "5 chiến lược, chọn ở tab Inputs · 5 strategies, pick in Inputs."
+#property description "Mỗi lệnh luôn có cắt lỗ · Every trade has a stop-loss."
+#property description "Chưa qua kiểm định. Hãy chạy demo trước · Not validated. Demo first."
+#property description "Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
 
 #include <Trade\Trade.mqh>
 #include "CLMCACore.mqh"
