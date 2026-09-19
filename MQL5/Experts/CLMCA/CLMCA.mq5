@@ -12,24 +12,42 @@
 #include "CLMCACore.mqh"
 
 // Giá trị enum = mã mode trong ForwardStepRCore.mqh (FSR_MODE_*).
-enum ENUM_FSR5_MODE { C_V1 = 3, D_V1 = 4, C_V1_P1b = 5, C_V1_P2 = 6, L07S = 7 };
+// Chữ sau "//" là mô tả hiện trong bảng Inputs của MT5. Tên biến giữ nguyên để file .set cũ vẫn dùng được.
+enum ENUM_FSR5_MODE
+  {
+   C_V1 = 3,      // Nhịp Hồi Chuẩn · Classic Pullback (C_V1)
+   C_V1_P1b = 5,  // Hồi Gần Chạm · Near-Touch Pullback (C_V1_P1b)
+   C_V1_P2 = 6,   // Hồi Trong 3 Nến · 3-Bar Pullback (C_V1_P2)
+   D_V1 = 4,      // Bắt Mọi Tín Hiệu · Every Signal (D_V1)
+   L07S = 7       // Mở Cửa London 7h · London Open 7AM (L07S)
+  };
+enum ENUM_FSR_RISK_MODE
+  {
+   FSR_RISK_USD = 0,      // Số tiền cố định ($) · Fixed amount ($)
+   FSR_RISK_PERCENT = 1   // % số dư tài khoản · % of balance
+  };
 
-input ENUM_FSR5_MODE   InpMode           = C_V1;    // Mode: C_V1 · C_V1_P1b · C_V1_P2 · D_V1 · L07S
-input string           InpAllowedLogins  = "";      // Tuỳ chọn: rỗng = MỌI tài khoản (kể cả TIỀN THẬT); có giá trị = chỉ các login này
-input long             InpMagic          = 0;       // 0 = theo mode: C_V1 88180511 · D_V1 88180512 · P1b 88180513 · P2 88180514 · L07S 88180515
-enum ENUM_FSR_RISK_MODE { FSR_RISK_USD = 0, FSR_RISK_PERCENT = 1 };
-input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Risk theo: $ cố định | % số dư
-input double           InpRiskUsd        = 50.0;    // Risk $/lệnh khi chế độ $ (giữ 50 để so backtest)
-input double           InpRiskPercent    = 0.1;     // Risk % SỐ DƯ/lệnh khi chế độ % (0.1 = 0,1%)
-input bool             InpUseSessionFilter = true;  // Bật lọc giờ vào lệnh (tắt = mọi giờ; lệch backtest). L07S bỏ qua: luôn 07:00 UTC
-input int              InpSessionStartUtc = 7;      // Giờ UTC bắt đầu (giờ MỞ nến tín hiệu, tính cả)
-input int              InpSessionEndUtc   = 19;     // Giờ UTC kết thúc (tính cả; start > end = vắt qua nửa đêm)
-input string           InpAccountRef     = "";      // Nhãn mờ cho CSV (vd "demo-C"), KHÔNG ghi login
-input int              InpServerGmtWinter = 2;      // Giờ server lệch UTC mùa đông (vd Vantage 2, Exness 0)
-input int              InpServerGmtSummer = 3;      // Giờ server lệch UTC mùa hè (vd Vantage 3, Exness 0), theo DST Mỹ
-input int              InpHistoryM15Bars = 12000;   // Số nến M15 nạp (≥ ~3 tháng cho EMA89 H4)
-input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi gửi lệnh (điểm)
-input int              InpMaxEntryDelaySec = 60;    // Quá N giây sau khi nến mở ⇒ KHÔNG vào (lệch parity)
+input group "1. Chiến lược · Strategy"
+input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
+input group "2. Rủi ro mỗi lệnh · Risk per trade"
+input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Tính rủi ro theo · Risk based on
+input double           InpRiskUsd        = 50.0;    // Mất tối đa ($) nếu chạm cắt lỗ · Max loss per trade ($)
+input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số dư), 0.1 = 0,1% · Max loss per trade (% of balance)
+input group "3. Giờ server của sàn · Broker server time"
+input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
+input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
+input group "4. Giờ giao dịch · Trading hours"
+input bool             InpUseSessionFilter = true;  // Chỉ vào lệnh trong khung giờ dưới · Only trade in hours below
+input int              InpSessionStartUtc = 7;      // Từ giờ (UTC) · From hour (UTC)
+input int              InpSessionEndUtc   = 19;     // Đến giờ (UTC), tính cả giờ này · To hour (UTC), inclusive
+input group "5. An toàn tài khoản · Account safety"
+input string           InpAllowedLogins  = "";      // Chỉ chạy trên số tài khoản này (cách nhau dấu phẩy; trống = mọi tài khoản) · Allowed account numbers
+input long             InpMagic          = 0;       // Mã nhận diện lệnh; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
+input group "6. Nâng cao, không cần đổi · Advanced"
+input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
+input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
+input int              InpHistoryM15Bars = 12000;   // Số nến M15 dùng để tính chỉ báo · M15 bars for indicators
+input string           InpAccountRef     = "";      // Nhãn ghi vào file CSV (tuỳ ý) · Label written to CSV files
 
 
 CTrade   g_trade;
