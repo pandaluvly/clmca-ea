@@ -23,33 +23,33 @@ enum ENUM_FSR5_MODE
   };
 enum ENUM_FSR_RISK_MODE
   {
-   FSR_RISK_USD = 0,      // Số tiền cố định ($) · Fixed amount ($)
-   FSR_RISK_PERCENT = 1   // % số dư tài khoản · % of balance
+   FSR_RISK_USD = 0,      // Số tiền $ · Fixed $
+   FSR_RISK_PERCENT = 1   // % số dư · % balance
   };
 
 #define FSR_MAX_RISK_PCT     2.0     // trần rủi ro mỗi lệnh: 2% số dư (áp cho cả chế độ $ và %)
 #define FSR_MAX_ENTRY_DELAY_SEC 60   // vào trễ quá 60 giây sau khi nến mở ⇒ bỏ lệnh (giá đã khác backtest)
 #define FSR_HISTORY_M15_BARS 12000   // số nến M15 nạp để tính chỉ báo (như backtest), không cho đổi
 
-input long             InpMagic          = 0;       // Magic number; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
 // Giờ server của sàn. Tự động: EA tự dò khi chạy thật. Strategy Tester không có giờ thật ⇒ phải chọn sàn.
 enum ENUM_FSR_BROKER_TIME
   {
-   BT_AUTO = 0,     // Tự động (chạy thật) · Auto-detect (live)
-   BT_NY_CLOSE = 1, // Vantage, IC Markets, Pepperstone… (giờ New York) · New York close brokers
+   BT_AUTO = 0,     // Tự động · Auto
+   BT_NY_CLOSE = 1, // Vantage, IC Markets, Pepperstone… (giờ NY · NY time)
    BT_GMT0 = 2,     // Exness (GMT+0)
-   BT_EU_CLOSE = 3  // Quỹ/sàn giờ châu Âu (GMT+2/+3, đổi giờ theo châu Âu) · EU-DST brokers / prop firms
+   BT_EU_CLOSE = 3  // Quỹ/sàn giờ châu Âu · EU-time brokers / prop firms
   };
 input group "1. Chiến lược · Strategy"
 input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
-input group "2. Rủi ro mỗi lệnh · Risk per trade"
-input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Tính rủi ro theo · Risk based on
-input double           InpRiskUsd        = 50.0;    // Mất tối đa ($) nếu chạm cắt lỗ, không quá 2% số dư · Max loss per trade ($), capped at 2% of balance
-input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số dư), từ 0,01 tới 2 · Max loss per trade (% of balance), 0.01–2
-input group "3. Sàn giao dịch · Broker"
-input ENUM_FSR_BROKER_TIME InpBrokerTime = BT_AUTO; // Sàn của bạn · Your broker
-input group "4. Nâng cao, không cần đổi · Advanced"
-input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
+input group "2. Rủi ro · Risk"
+input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Rủi ro theo · Risk by
+input double           InpRiskUsd        = 50.0;    // Lỗ tối đa $ · Max loss $
+input double           InpRiskPercent    = 0.1;     // Lỗ tối đa % · Max loss %
+input group "3. Sàn · Broker"
+input ENUM_FSR_BROKER_TIME InpBrokerTime = BT_AUTO; // Sàn · Broker
+input group "4. Nâng cao · Advanced"
+input int              InpDeviationPoints = 50;     // Trượt giá (point) · Slippage (pt)
+input long             InpMagic          = 0;       // Magic (0 = tự động · auto)
 
 
 CTrade   g_trade;
