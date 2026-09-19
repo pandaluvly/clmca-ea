@@ -30,7 +30,7 @@ Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới h�
 | Input | Ý nghĩa |
 |---|---|
 | `InpMode` | chọn 1 trong 5 chế độ |
-| `InpServerGmtWinter/Summer` | giờ server lệch UTC. Vantage `2/3`, Exness `0/0`. Sai là lệch khung giờ; EA tự chặn nếu lệch > 5 phút (chạy thật) |
+| `InpBrokerTime` | Sàn: **Tự động** khi chạy thật; trong Strategy Tester chọn **Vantage/IC Markets… (giờ New York)** hoặc **Exness (GMT+0)** |
 | `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | rủi ro mỗi lệnh: $ cố định hoặc % số dư |
 | `InpMagic` | 0 = magic theo chế độ; nhiều chế độ chạy chung tài khoản không lẫn nhau |
 

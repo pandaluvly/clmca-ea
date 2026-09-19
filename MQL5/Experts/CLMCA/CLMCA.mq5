@@ -32,15 +32,21 @@ enum ENUM_FSR_RISK_MODE
 #define FSR_HISTORY_M15_BARS 12000   // số nến M15 nạp để tính chỉ báo (như backtest), không cho đổi
 
 input long             InpMagic          = 0;       // Magic number; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
+// Giờ server của sàn. Tự động: EA tự dò khi chạy thật. Strategy Tester không có giờ thật ⇒ phải chọn sàn.
+enum ENUM_FSR_BROKER_TIME
+  {
+   BT_AUTO = 0,     // Tự động (chạy thật) · Auto-detect (live)
+   BT_NY_CLOSE = 1, // Vantage, IC Markets, Pepperstone… (giờ New York) · New York close brokers
+   BT_GMT0 = 2      // Exness (GMT+0)
+  };
 input group "1. Chiến lược · Strategy"
 input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
 input group "2. Rủi ro mỗi lệnh · Risk per trade"
 input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Tính rủi ro theo · Risk based on
 input double           InpRiskUsd        = 50.0;    // Mất tối đa ($) nếu chạm cắt lỗ, không quá 2% số dư · Max loss per trade ($), capped at 2% of balance
 input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số dư), từ 0,01 tới 2 · Max loss per trade (% of balance), 0.01–2
-input group "3. Giờ server của sàn · Broker server time"
-input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
-input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
+input group "3. Sàn giao dịch · Broker"
+input ENUM_FSR_BROKER_TIME InpBrokerTime = BT_AUTO; // Sàn của bạn · Your broker
 input group "4. Nâng cao, không cần đổi · Advanced"
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
 
@@ -87,9 +93,11 @@ FsrPos g_pos[];
 //+------------------------------------------------------------------+
 //| Tiện ích                                                          |
 //+------------------------------------------------------------------+
+int g_gmt_winter = 2, g_gmt_summer = 3;   // lệch UTC (giờ) mùa đông/hè Mỹ — đặt trong ResolveBrokerTime()
+
 long ToUtc(const datetime server_t)
   {
-   return Fsr_ServerToUtc((long)server_t, InpServerGmtWinter, InpServerGmtSummer);
+   return Fsr_ServerToUtc((long)server_t, g_gmt_winter, g_gmt_summer);
   }
 
 string Iso(const long utc)
@@ -939,6 +947,33 @@ void Pump()
    OnNewBar(cur, true);
   }
 
+// Đặt g_gmt_winter/summer theo lựa chọn sàn. Tự động: đo lệch hiện tại (giờ server − giờ GMT, làm tròn giờ)
+// rồi suy ra kiểu giờ: 0 ⇒ GMT+0 cả năm; 2 lúc Mỹ chưa đổi giờ hoặc 3 lúc đã đổi ⇒ kiểu New York (2/3);
+// khác ⇒ coi là lệch cố định cả năm và in cảnh báo.
+bool ResolveBrokerTime(const bool in_tester)
+  {
+   if(InpBrokerTime == BT_NY_CLOSE) { g_gmt_winter = 2; g_gmt_summer = 3; return true; }
+   if(InpBrokerTime == BT_GMT0)     { g_gmt_winter = 0; g_gmt_summer = 0; return true; }
+   if(in_tester)
+     {
+      Print("[FSR] ⛔ Strategy Tester không có giờ thật để tự dò — hãy chọn sàn ở mục 3 · In the Strategy Tester, pick your broker in group 3.");
+      return false;
+     }
+   long diff = (long)TimeTradeServer() - (long)TimeGMT();
+   int off = (int)MathRound(diff / 3600.0);
+   bool dst = Fsr_IsUsDst((long)TimeGMT(), Fsr_YearOf((long)TimeGMT()));
+   if(off == 0)                       { g_gmt_winter = 0; g_gmt_summer = 0; }
+   else if((dst && off == 3) || (!dst && off == 2)) { g_gmt_winter = 2; g_gmt_summer = 3; }
+   else
+     {
+      g_gmt_winter = off;
+      g_gmt_summer = off;
+      PrintFormat("[FSR] ⚠️ giờ server lệch GMT %+d giờ, kiểu lạ — coi là cố định cả năm · unusual server offset, assumed fixed.", off);
+     }
+   PrintFormat("[FSR] giờ server: lệch GMT mùa đông %+d, mùa hè %+d · server offset winter/summer", g_gmt_winter, g_gmt_summer);
+   return true;
+  }
+
 int OnInit()
   {
    g_mode = (int)InpMode;
@@ -965,14 +1000,15 @@ int OnInit()
       return INIT_FAILED;
      }
    // Kiểm quy đổi giờ server → UTC khớp đồng hồ terminal (sai ⇒ lệch khung giờ 7–19 và biên H4).
-   // Strategy Tester: TimeGMT() = giờ server giả lập (không có đồng hồ thật) ⇒ bỏ kiểm này; giờ UTC
-   // trong tester dựa hoàn toàn vào InpServerGmtWinter/Summer — đặt đúng theo broker của dữ liệu.
+   // Strategy Tester: TimeGMT() = giờ server giả lập (không có đồng hồ thật) ⇒ bỏ kiểm này.
    bool in_tester = (MQLInfoInteger(MQL_TESTER) != 0);
+   if(!ResolveBrokerTime(in_tester))
+      return INIT_FAILED;
    long est = ToUtc(TimeTradeServer());
    long gmt = (long)TimeGMT();
    if(!in_tester && MathAbs(est - gmt) > 300)
      {
-      PrintFormat("[FSR] ⛔ quy đổi giờ server→UTC lệch %I64d s (server=%s gmt=%s). Sửa InpServerGmtWinter/Summer.",
+      PrintFormat("[FSR] ⛔ quy đổi giờ server→UTC lệch %I64d s (server=%s gmt=%s). Hãy chọn đúng sàn ở mục 3 · Pick your broker in group 3.",
                   est - gmt, TimeToString(TimeTradeServer()), TimeToString(TimeGMT()));
       return INIT_FAILED;
      }
