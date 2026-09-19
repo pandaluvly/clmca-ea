@@ -40,7 +40,7 @@ input group "3. Giờ server của sàn · Broker server time"
 input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
 input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
 input group "4. Nâng cao, không cần đổi · Advanced"
-input long             InpMagic          = 0;       // Mã nhận diện lệnh; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
+input long             InpMagic          = 0;       // Magic number; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
 input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
 
