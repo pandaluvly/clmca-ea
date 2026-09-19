@@ -22,6 +22,11 @@ Chỉ LONG. Mọi lệnh mở đều kèm **Stop-Loss cứng** = EMA89 − 0,956
 Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới hết ngày.
 
 ## Cài đặt
+**Cách nhanh (một file · single file):** tải `release/CLMCA.mq5`, bỏ vào `MQL5/Experts/` trong thư mục dữ liệu MT5
+(`File → Open Data Folder`), compile trong MetaEditor, rồi gắn vào chart **XAUUSD M15** và bật Algo Trading.
+File này là `CLMCA.mq5` đã gộp sẵn `CLMCACore.mqh`, logic y hệt bản nhiều file.
+
+**Cách đầy đủ (có self-test):**
 1. Copy thư mục `MQL5/Experts/CLMCA/` vào thư mục dữ liệu MT5 (`File → Open Data Folder`).
 2. MetaEditor: compile `CLMCA_SelfTest.mq5`, kéo vào chart bất kỳ. Tab Experts phải ra `PASS … fail=0`.
 3. Compile `CLMCA.mq5`, gắn vào chart **XAUUSD M15** (Exness: `XAUUSDm`), bật Algo Trading.
@@ -42,3 +47,7 @@ EA ghi CSV vào `MQL5/Files/fsr5_<MODE>/`: `trades.csv`, `signals.csv` (mọi n�
 
 ## License
 MIT, xem `LICENSE`. Phần mềm được cung cấp "nguyên trạng", không bảo hành.
+
+## Dành cho người sửa mã · For contributors
+Sửa trong `MQL5/Experts/CLMCA/`, **không sửa tay** `release/CLMCA.mq5`. Sau khi sửa, chạy `python3 tools/bundle.py` để
+sinh lại file một file. Trước khi phát hành: backtest bản gộp và bản nhiều file trên cùng dải ngày, `trades.csv` phải trùng từng lệnh.
