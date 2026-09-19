@@ -28,8 +28,10 @@ enum ENUM_FSR_RISK_MODE
   };
 
 #define FSR_MAX_RISK_PCT     2.0     // trần rủi ro mỗi lệnh: 2% số dư (áp cho cả chế độ $ và %)
+#define FSR_MAX_ENTRY_DELAY_SEC 60   // vào trễ quá 60 giây sau khi nến mở ⇒ bỏ lệnh (giá đã khác backtest)
 #define FSR_HISTORY_M15_BARS 12000   // số nến M15 nạp để tính chỉ báo (như backtest), không cho đổi
 
+input long             InpMagic          = 0;       // Magic number; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
 input group "1. Chiến lược · Strategy"
 input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
 input group "2. Rủi ro mỗi lệnh · Risk per trade"
@@ -40,9 +42,7 @@ input group "3. Giờ server của sàn · Broker server time"
 input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
 input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
 input group "4. Nâng cao, không cần đổi · Advanced"
-input long             InpMagic          = 0;       // Magic number; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
-input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
 
 
 CTrade   g_trade;
@@ -550,7 +550,7 @@ string TryEnter(const long signal_utc, const double ema89_c1, const double stop_
                 const datetime cur_bar_server)
   {
    long delay = (long)(TimeTradeServer() - cur_bar_server);
-   if(delay > InpMaxEntryDelaySec)
+   if(delay > FSR_MAX_ENTRY_DELAY_SEC)
      {
       Incident("entry_late_skipped", StringFormat("delay_s=%I64d", delay));
       return "skip_late";
