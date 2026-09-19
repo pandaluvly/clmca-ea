@@ -36,14 +36,11 @@ input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số d
 input group "3. Giờ server của sàn · Broker server time"
 input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
 input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
-input group "4. An toàn tài khoản · Account safety"
-input string           InpAllowedLogins  = "";      // Chỉ chạy trên số tài khoản này (cách nhau dấu phẩy; trống = mọi tài khoản) · Allowed account numbers
+input group "4. Nâng cao, không cần đổi · Advanced"
 input long             InpMagic          = 0;       // Mã nhận diện lệnh; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
-input group "5. Nâng cao, không cần đổi · Advanced"
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
 input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
 input int              InpHistoryM15Bars = 12000;   // Số nến M15 dùng để tính chỉ báo · M15 bars for indicators
-input string           InpAccountRef     = "";      // Nhãn ghi vào file CSV (tuỳ ý) · Label written to CSV files
 
 
 CTrade   g_trade;
@@ -130,21 +127,6 @@ void Incident(const string kind, const string detail)
    PrintFormat("[FSR] incident %s %s", kind, detail);
    AppendLine("incidents.csv", "time_utc,strategy_version,kind,detail",
               Iso(now) + "," + Fsr5_ModeVersion(g_mode) + "," + kind + ",\"" + detail + "\"");
-  }
-
-bool LoginAllowed(const long login)
-  {
-   string parts[];
-   int n = StringSplit(InpAllowedLogins, ',', parts);
-   for(int i = 0; i < n; i++)
-     {
-      string p = parts[i];
-      StringTrimLeft(p);
-      StringTrimRight(p);
-      if(StringLen(p) > 0 && StringToInteger(p) == login)
-         return true;
-     }
-   return false;
   }
 
 //+------------------------------------------------------------------+
@@ -754,7 +736,7 @@ bool LogClosed(const int k)
               "exit_price,exit_fill_price,exit_slippage_vs_sl,spread_at_exit,commission_usd,swap_usd,net_pnl,realized_r,"
               "pnl_R_usd,mfe_r,mae_r,max_r_level_reached,holding_duration_minutes,order_ref,parity_excluded,"
               "atr14_at_signal,dragon_width,ema34_slope,k_width,k_slope,k_buf,h4_close,h4_ema34,h4_ema89",
-              id + "," + sv + "," + InpAccountRef + ",long," + Iso(p.signal_utc + 900) + "," + Iso(p.signal_utc) + "," +
+              id + "," + sv + "," + "" + ",long," + Iso(p.signal_utc + 900) + "," + Iso(p.signal_utc) + "," +
               D(p.ask_at_send) + "," + D(p.ask_open_next) + "," + D(p.ask_at_send) + "," + D(p.fill_price) + "," +
               Iso(p.fill_utc) + "," + D(p.fill_price - p.ask_at_send) + "," + D((p.fill_price - p.ask_at_send) / p.r_price, 4) + "," +
               D(p.fill_price - p.ask_open_next) + "," +
@@ -958,15 +940,8 @@ int OnInit()
       return INIT_FAILED;
      }
    g_variant = Fsr5_ModeVariant(g_mode);
-   long login = AccountInfoInteger(ACCOUNT_LOGIN);
    if(AccountInfoInteger(ACCOUNT_TRADE_MODE) != ACCOUNT_TRADE_MODE_DEMO)
       Print("[FSR] ⚠️ tài khoản KHÔNG phải DEMO — EA sẽ đặt lệnh TIỀN THẬT. chưa qua kiểm định (xem README).");
-   // Allowlist tuỳ chọn (rỗng = mọi tài khoản).
-   if(StringLen(InpAllowedLogins) > 0 && !LoginAllowed(login))
-     {
-      PrintFormat("[FSR] ⛔ login %I64d không nằm trong InpAllowedLogins.", login);
-      return INIT_FAILED;
-     }
    if(_Period != PERIOD_M15 || StringFind(_Symbol, "XAUUSD") != 0)
      {
       PrintFormat("[FSR] ⛔ phải gắn chart XAUUSD M15 (đang %s %s).", _Symbol, EnumToString((ENUM_TIMEFRAMES)_Period));

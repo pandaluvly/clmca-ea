@@ -32,8 +32,6 @@ Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới h�
 | `InpMode` | chọn 1 trong 5 chế độ |
 | `InpServerGmtWinter/Summer` | giờ server lệch UTC. Vantage `2/3`, Exness `0/0`. Sai là lệch khung giờ; EA tự chặn nếu lệch > 5 phút (chạy thật) |
 | `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | rủi ro mỗi lệnh: $ cố định hoặc % số dư |
-| `InpAllowedLogins` | chỉ chạy trên các login này (khuyên điền, nhất là tài khoản quỹ) |
-| `InpUseSessionFilter` / giờ phiên | khung giờ UTC vào lệnh (mặc định 7–19; L07S bỏ qua) |
 | `InpMagic` | 0 = magic theo chế độ; nhiều chế độ chạy chung tài khoản không lẫn nhau |
 
 Tài khoản quỹ: đọc kỹ luật daily loss / max drawdown (static hay trailing) / giờ reset ngày của quỹ trước khi chạy.
