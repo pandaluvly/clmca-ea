@@ -949,7 +949,7 @@ void Pump()
 
 // Đặt g_gmt_winter/summer theo lựa chọn sàn. Tự động: đo lệch hiện tại (giờ server − giờ GMT, làm tròn giờ)
 // rồi suy ra kiểu giờ: 0 ⇒ GMT+0 cả năm; 2 lúc Mỹ chưa đổi giờ hoặc 3 lúc đã đổi ⇒ kiểu New York (2/3);
-// khác ⇒ coi là lệch cố định cả năm và in cảnh báo.
+// khác ⇒ kiểu giờ lạ, EA không chạy (khung giờ 7–19 UTC và nến H1/H4 sẽ sai).
 bool ResolveBrokerTime(const bool in_tester)
   {
    if(InpBrokerTime == BT_NY_CLOSE) { g_gmt_winter = 2; g_gmt_summer = 3; return true; }
@@ -966,9 +966,9 @@ bool ResolveBrokerTime(const bool in_tester)
    else if((dst && off == 3) || (!dst && off == 2)) { g_gmt_winter = 2; g_gmt_summer = 3; }
    else
      {
-      g_gmt_winter = off;
-      g_gmt_summer = off;
-      PrintFormat("[FSR] ⚠️ giờ server lệch GMT %+d giờ, kiểu lạ — coi là cố định cả năm · unusual server offset, assumed fixed.", off);
+      PrintFormat("[FSR] ⛔ giờ server lệch GMT %+d giờ — kiểu giờ lạ, EA chưa hỗ trợ sàn này nên KHÔNG chạy · "
+                  "unsupported server time (GMT%+d), EA will not run.", off, off);
+      return false;
      }
    PrintFormat("[FSR] giờ server: lệch GMT mùa đông %+d, mùa hè %+d · server offset winter/summer", g_gmt_winter, g_gmt_summer);
    return true;
