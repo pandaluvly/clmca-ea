@@ -27,12 +27,25 @@ enum ENUM_FSR_RISK_MODE
    FSR_RISK_PERCENT = 1   // % số dư tài khoản · % of balance
   };
 
+// Mức rủi ro % số dư mỗi lệnh — giá trị enum = % × 100.
+enum ENUM_FSR_RISK_PCT
+  {
+   RISK_PCT_0_1 = 10,    // 0,1% · rất thận trọng / very conservative
+   RISK_PCT_0_25 = 25,   // 0,25% · thận trọng / conservative
+   RISK_PCT_0_5 = 50,    // 0,5% · vừa phải / moderate
+   RISK_PCT_1 = 100,     // 1% · cao / high
+   RISK_PCT_2 = 200,     // 2% · rất cao, dễ cháy tài khoản quỹ / very high
+   RISK_PCT_3 = 300,     // 3% · nguy hiểm / dangerous
+   RISK_PCT_5 = 500      // 5% · cực kỳ nguy hiểm, 20 lệnh thua ≈ mất 64% / extreme
+  };
+#define FSR_HISTORY_M15_BARS 12000   // số nến M15 nạp để tính chỉ báo (như backtest), không cho đổi
+
 input group "1. Chiến lược · Strategy"
 input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
 input group "2. Rủi ro mỗi lệnh · Risk per trade"
 input ENUM_FSR_RISK_MODE InpRiskMode    = FSR_RISK_USD; // Tính rủi ro theo · Risk based on
 input double           InpRiskUsd        = 50.0;    // Mất tối đa ($) nếu chạm cắt lỗ · Max loss per trade ($)
-input double           InpRiskPercent    = 0.1;     // Mất tối đa (% số dư), 0.1 = 0,1% · Max loss per trade (% of balance)
+input ENUM_FSR_RISK_PCT InpRiskPercent   = RISK_PCT_0_1; // Mất tối đa (% số dư) nếu chạm cắt lỗ · Max loss per trade (% of balance)
 input group "3. Giờ server của sàn · Broker server time"
 input int              InpServerGmtWinter = 2;      // Lệch UTC mùa đông: Vantage 2, Exness 0 · UTC offset, winter
 input int              InpServerGmtSummer = 3;      // Lệch UTC mùa hè: Vantage 3, Exness 0 · UTC offset, summer
@@ -40,7 +53,6 @@ input group "4. Nâng cao, không cần đổi · Advanced"
 input long             InpMagic          = 0;       // Mã nhận diện lệnh; 0 = tự đặt theo chiến lược · Magic number (0 = auto)
 input int              InpDeviationPoints = 50;     // Trượt giá tối đa khi vào lệnh (point) · Max slippage (points)
 input int              InpMaxEntryDelaySec = 60;    // Bỏ lệnh nếu trễ quá N giây sau khi nến mở · Skip entry if later than N sec
-input int              InpHistoryM15Bars = 12000;   // Số nến M15 dùng để tính chỉ báo · M15 bars for indicators
 
 
 CTrade   g_trade;
@@ -351,7 +363,7 @@ int LoadM15(long &t[], double &o[], double &h[], double &l[], double &c[], int &
   {
    MqlRates r[];
    ArraySetAsSeries(r, false);
-   int n = CopyRates(_Symbol, PERIOD_M15, 1, InpHistoryM15Bars, r);
+   int n = CopyRates(_Symbol, PERIOD_M15, 1, FSR_HISTORY_M15_BARS, r);
    if(n <= 0)
       return n;
    ArrayResize(t, n);
@@ -532,7 +544,7 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
 double RiskUsdNow()
   {
    if(InpRiskMode == FSR_RISK_PERCENT)
-      return AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
+      return AccountInfoDouble(ACCOUNT_BALANCE) * ((int)InpRiskPercent / 100.0) / 100.0;
    return InpRiskUsd;
   }
 
@@ -950,10 +962,9 @@ int OnInit()
    // Magic RIÊNG của EA 5 chế độ (khác EA 4 chế độ 881803xx) ⇒ chạy cạnh nhau trên cùng demo không lẫn lệnh.
    long mode_magic[8] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515};
    g_magic = InpMagic != 0 ? InpMagic : mode_magic[g_mode];
-   if((InpRiskMode == FSR_RISK_USD && !(InpRiskUsd > 0.0))
-      || (InpRiskMode == FSR_RISK_PERCENT && !(InpRiskPercent > 0.0 && InpRiskPercent <= 5.0)) || InpHistoryM15Bars < 9000)
+   if(InpRiskMode == FSR_RISK_USD && !(InpRiskUsd > 0.0))
      {
-      Print("[FSR] ⛔ InpRiskUsd > 0, 0 < InpRiskPercent ≤ 5, InpHistoryM15Bars ≥ 9000.");
+      Print("[FSR] ⛔ Mất tối đa ($) phải > 0 · Max loss ($) must be > 0.");
       return INIT_FAILED;
      }
    // Kiểm quy đổi giờ server → UTC khớp đồng hồ terminal (sai ⇒ lệch khung giờ 7–19 và biên H4).
