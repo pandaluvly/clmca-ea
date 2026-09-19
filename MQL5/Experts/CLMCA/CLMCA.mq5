@@ -37,7 +37,8 @@ enum ENUM_FSR_BROKER_TIME
   {
    BT_AUTO = 0,     // Tự động (chạy thật) · Auto-detect (live)
    BT_NY_CLOSE = 1, // Vantage, IC Markets, Pepperstone… (giờ New York) · New York close brokers
-   BT_GMT0 = 2      // Exness (GMT+0)
+   BT_GMT0 = 2,     // Exness (GMT+0)
+   BT_EU_CLOSE = 3  // Quỹ/sàn giờ châu Âu (GMT+2/+3, đổi giờ theo châu Âu) · EU-DST brokers / prop firms
   };
 input group "1. Chiến lược · Strategy"
 input ENUM_FSR5_MODE   InpMode           = C_V1;    // Chiến lược · Strategy
@@ -93,10 +94,13 @@ FsrPos g_pos[];
 //+------------------------------------------------------------------+
 //| Tiện ích                                                          |
 //+------------------------------------------------------------------+
-int g_gmt_winter = 2, g_gmt_summer = 3;   // lệch UTC (giờ) mùa đông/hè Mỹ — đặt trong ResolveBrokerTime()
+int g_gmt_winter = 2, g_gmt_summer = 3;   // lệch UTC (giờ) mùa đông/hè — đặt trong ResolveBrokerTime()
+bool g_eu_dst = false;                    // true ⇒ đổi giờ theo lịch châu Âu thay vì Mỹ
 
 long ToUtc(const datetime server_t)
   {
+   if(g_eu_dst)
+      return Fsr_ServerToUtcEu((long)server_t, g_gmt_winter, g_gmt_summer);
    return Fsr_ServerToUtc((long)server_t, g_gmt_winter, g_gmt_summer);
   }
 
@@ -954,6 +958,7 @@ bool ResolveBrokerTime(const bool in_tester)
   {
    if(InpBrokerTime == BT_NY_CLOSE) { g_gmt_winter = 2; g_gmt_summer = 3; return true; }
    if(InpBrokerTime == BT_GMT0)     { g_gmt_winter = 0; g_gmt_summer = 0; return true; }
+   if(InpBrokerTime == BT_EU_CLOSE) { g_gmt_winter = 2; g_gmt_summer = 3; g_eu_dst = true; return true; }
    if(in_tester)
      {
       Print("[FSR] ⛔ Strategy Tester không có giờ thật để tự dò — hãy chọn sàn ở mục 3 · In the Strategy Tester, pick your broker in group 3.");
@@ -966,8 +971,8 @@ bool ResolveBrokerTime(const bool in_tester)
    else if((dst && off == 3) || (!dst && off == 2)) { g_gmt_winter = 2; g_gmt_summer = 3; }
    else
      {
-      PrintFormat("[FSR] ⛔ giờ server lệch GMT %+d giờ — kiểu giờ lạ, EA chưa hỗ trợ sàn này nên KHÔNG chạy · "
-                  "unsupported server time (GMT%+d), EA will not run.", off, off);
+      PrintFormat("[FSR] ⛔ giờ server lệch GMT %+d giờ — kiểu giờ lạ, EA KHÔNG chạy. Nếu là quỹ/sàn đổi giờ theo châu Âu, "
+                  "chọn mục đó ở ô Sàn · unsupported server time (GMT%+d); for EU-DST brokers pick that option.", off, off);
       return false;
      }
    PrintFormat("[FSR] giờ server: lệch GMT mùa đông %+d, mùa hè %+d · server offset winter/summer", g_gmt_winter, g_gmt_summer);

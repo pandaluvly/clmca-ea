@@ -163,6 +163,29 @@ int Fsr_YearOf(const long t)
    return (int)(y + (m <= 2 ? 1 : 0));
   }
 
+// Giờ hè châu Âu: từ Chủ nhật cuối tháng 3 01:00 UTC tới Chủ nhật cuối tháng 10 01:00 UTC.
+int Fsr_LastSunday(const int y, const int m)
+  {
+   int dim[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+   int last = dim[m - 1] + ((m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0)) ? 1 : 0);
+   return last - Fsr_DayOfWeek(y, m, last);
+  }
+
+bool Fsr_IsEuDst(const long utc_time, const int year)
+  {
+   long start = Fsr_DaysFromCivil(year, 3, Fsr_LastSunday(year, 3)) * 86400 + 3600;
+   long stop = Fsr_DaysFromCivil(year, 10, Fsr_LastSunday(year, 10)) * 86400 + 3600;
+   return utc_time >= start && utc_time < stop;
+  }
+
+// Server time → UTC cho sàn đổi giờ theo châu Âu (GMT+2 đông / GMT+3 hè).
+long Fsr_ServerToUtcEu(const long server_time, const int winter_h, const int summer_h)
+  {
+   long guess = server_time - (long)summer_h * 3600;
+   bool dst = Fsr_IsEuDst(guess, Fsr_YearOf(guess));
+   return server_time - (long)(dst ? summer_h : winter_h) * 3600;
+  }
+
 // Server time → UTC cho broker NY-close. winter_h/summer_h = độ lệch giờ (vd 2/3).
 // Lấy DST theo mốc UTC ước lượng bằng offset hè (sai lệch chỉ trong cửa sổ cuối tuần đổi giờ).
 long Fsr_ServerToUtc(const long server_time, const int winter_h, const int summer_h)

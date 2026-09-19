@@ -213,5 +213,10 @@ void OnStart()
           && Fsr5_ModeVariant(FSR_MODE_D_V1) == FSR_VARIANT_D && !Fsr5_ModeValid(FSR_MODE_C_V0)
           && !Fsr_ModeValid(FSR_MODE_L07S), "TV-FSR-14 mode map");
    }
+   // TV-FSR-15 giờ châu Âu: Chủ nhật cuối tháng 3/10, quy đổi server→UTC
+   Check(Fsr_LastSunday(2026, 3) == 29 && Fsr_LastSunday(2026, 10) == 25 && Fsr_LastSunday(2024, 2) == 25, "TV-FSR-15 last sunday");
+   Check(Fsr_ServerToUtcEu(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 10)       // Mỹ đã đổi giờ, châu Âu chưa
+         && Fsr_ServerToUtcEu(Ep(2026, 4, 2, 12), 2, 3) == Ep(2026, 4, 2, 9)
+         && Fsr_ServerToUtc(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 9), "TV-FSR-15 eu vs us gap");
    PrintFormat("[FSR-SELFTEST] %s pass=%d fail=%d", g_fail == 0 ? "PASS" : "FAIL", g_pass, g_fail);
   }
