@@ -64,6 +64,14 @@ Hỗ trợ khi có thể, không cam kết thời gian trả lời. Báo lỗi q
 Support on a best-effort basis, no response time guaranteed. Report bugs via GitHub Issues with the sha256 of the file
 you run and the Experts-tab log.
 
+## Kiểm file · Verify your download
+So sha256 file bạn tải với `release/SHA256SUMS` (và bảng trên web) · Compare the sha256 of your file with `release/SHA256SUMS`:
+- Windows: `certutil -hashfile CLMCA.ex5 SHA256`
+- macOS / Linux: `shasum -a 256 CLMCA.ex5`
+
+Lúc khởi động, tab Experts in `[CLMCA] build <ngày giờ>` — gửi kèm dòng này khi báo lỗi · On start, the Experts tab prints
+`[CLMCA] build <date time>`; include it when reporting a bug.
+
 ## Bản gốc · Official copy
 Chỉ tải từ repo này hoặc https://clmca.pandify.io và so sha256 với trang web. Bản đã sửa không phải bản gốc; nếu bạn
 sửa code, hãy đổi tên EA và magic.
