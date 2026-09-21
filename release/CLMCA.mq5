@@ -1,27 +1,42 @@
-// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 b45693d59d12).
+// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 fd66a604d37c).
 // Sửa mã ở MQL5/Experts/CLMCA/, rồi chạy lại tools/bundle.py.
-//+------------------------------------------------------------------+
-//| CLMCA.mq5 — "Có Làm Mới Có Ăn" · XAUUSD M15 · 5 modes            |
-//| C_V1 · C_V1_P1b · C_V1_P2 · D_V1 · L07S (xem README.md)          |
-//| MIT License · KHÔNG bảo hành · chưa qua kiểm định thống kê.       |
-//| Mọi lệnh mở kèm Stop-Loss cứng. Không TP, không martingale.       |
-//+------------------------------------------------------------------+
+//+------------------------------------------------------------------------------------+
+//| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 5 chiến lược · 5 strategies     |
+//| Bản gốc · Official source: https://clmca.pandify.io · github.com/pandaluvly/clmca-ea |
+//| Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community. |
+//| MIT License — xem LICENSE · see LICENSE.                                            |
+//|                                                                                    |
+//| ⚠️ CHƯA ĐỦ CĂN CỨ ĐỂ CHẠY TIỀN THẬT. Không bảo hành. Hãy chạy demo trước.            |
+//|    NOT PROVEN FOR REAL MONEY. No warranty. Run it on a demo account first.         |
+//| Mọi lệnh có cắt lỗ cứng. Không TP, không martingale, không grid.                     |
+//| Every trade has a hard stop-loss. No take-profit, no martingale, no grid.          |
+//|                                                                                    |
+//| Nếu bạn nhận file này từ người khác hoặc nó đã bị sửa: đó KHÔNG phải bản gốc.         |
+//| Chỉ tải từ hai địa chỉ ở trên, và so sha256 với trang web.                           |
+//| If you got this file elsewhere or it was modified, it is NOT the original.         |
+//| Download only from the two addresses above and check its sha256 on the website.    |
+//| Đã sửa code thì đổi tên EA và magic, đừng dùng tên CLMCA.                            |
+//| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
+//+------------------------------------------------------------------------------------+
 #property strict
 #property version   "1.00"
-#property copyright   "Có Làm Mới Có Ăn · Panda"
+#property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
+#property description "Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
 #property description "EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
-#property description "5 chiến lược, chọn ở tab Inputs · 5 strategies, pick in Inputs."
-#property description "Mỗi lệnh luôn có cắt lỗ · Every trade has a stop-loss."
-#property description "Chưa qua kiểm định. Hãy chạy demo trước · Not validated. Demo first."
+#property description "5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
+#property description "Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
 #property description "Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
+#property description "Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
 
 #include <Trade\Trade.mqh>
-// ===== BEGIN CLMCACore.mqh (sha256 b6f26342cfbd) — sinh tự động, đừng sửa tay =====
-//+------------------------------------------------------------------+
-//| CLMCACore.mqh — hàm thuần (chỉ báo, tín hiệu, thang SL) cho CLMCA |
-//| Không I/O, không đặt lệnh. MIT License.                           |
-//+------------------------------------------------------------------+
+// ===== BEGIN CLMCACore.mqh (sha256 2c8fd999f3e3) — sinh tự động, đừng sửa tay =====
+//+------------------------------------------------------------------------------------+
+//| CLMCACore.mqh — hàm thuần (chỉ báo, tín hiệu, thang SL) cho CLMCA · Pandify           |
+//| Không I/O, không đặt lệnh. MIT License. Bản gốc: github.com/pandaluvly/clmca-ea      |
+//| Pure functions (indicators, signals, SL ladder). No I/O, no orders. MIT License.   |
+//| Bản đã sửa không phải bản gốc · A modified copy is not the original.               |
+//+------------------------------------------------------------------------------------+
 #ifndef FORWARD_STEP_R_CORE_MQH
 #define FORWARD_STEP_R_CORE_MQH
 
@@ -1721,6 +1736,8 @@ int OnInit()
       return INIT_FAILED;
      }
    g_version = BuildVersion();
+   PrintFormat("[CLMCA] build %s · %s · magic %I64d — bản gốc · official: github.com/pandaluvly/clmca-ea",
+               TimeToString(__DATETIME__, TIME_DATE | TIME_MINUTES), g_version, g_magic);
    if(g_mode == FSR_MODE_L07S)
      {
       if(InpHours != HOURS_24)

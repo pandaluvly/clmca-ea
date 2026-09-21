@@ -1,7 +1,9 @@
-//+------------------------------------------------------------------+
-//| CLMCACore.mqh — hàm thuần (chỉ báo, tín hiệu, thang SL) cho CLMCA |
-//| Không I/O, không đặt lệnh. MIT License.                           |
-//+------------------------------------------------------------------+
+//+------------------------------------------------------------------------------------+
+//| CLMCACore.mqh — hàm thuần (chỉ báo, tín hiệu, thang SL) cho CLMCA · Pandify           |
+//| Không I/O, không đặt lệnh. MIT License. Bản gốc: github.com/pandaluvly/clmca-ea      |
+//| Pure functions (indicators, signals, SL ladder). No I/O, no orders. MIT License.   |
+//| Bản đã sửa không phải bản gốc · A modified copy is not the original.               |
+//+------------------------------------------------------------------------------------+
 #ifndef FORWARD_STEP_R_CORE_MQH
 #define FORWARD_STEP_R_CORE_MQH
 
