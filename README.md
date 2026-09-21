@@ -53,6 +53,11 @@ File này là `CLMCA.mq5` đã gộp sẵn `CLMCACore.mqh`, logic y hệt bản 
   mass-distributed EAs** or identical trades across accounts. Everyone running the same CLMCA strategy gets nearly
   identical trades; you may be denied a payout or lose the account. **That risk is yours.**
 
+## Ủng hộ · Donate
+CLMCA miễn phí. Nếu thấy hữu ích, bạn có thể ủng hộ qua mục Donate trên web (QR ngân hàng / PayPal):
+https://clmca.pandify.io/vi/#contact · If you find it useful: https://clmca.pandify.io/en/#contact
+Ủng hộ không đổi gì về EA: không có bản "trả phí", không có tín hiệu riêng · Donating unlocks nothing: no paid tier, no private signals.
+
 ## Hỗ trợ · Support
 Hỗ trợ khi có thể, không cam kết thời gian trả lời. Báo lỗi qua GitHub Issues, kèm sha256 của file bạn đang chạy và
 đoạn log tab Experts.
