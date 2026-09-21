@@ -56,10 +56,46 @@ input ENUM_FSR_BROKER_TIME InpBrokerTime = BT_AUTO; // Sàn · Broker
 input group "4. Nâng cao · Advanced"
 input int              InpDeviationPoints = 50;     // Trượt giá (point) · Slippage (pt)
 input long             InpMagic          = 0;       // Magic (0 = tự động · auto)
+enum ENUM_CLMCA_HOURS
+  {
+   HOURS_24 = 0,     // 24/24 (mặc định · default)
+   HOURS_LOCAL = 1,  // Theo giờ máy tính · My computer's time
+   HOURS_UTC = 2     // Theo giờ UTC · UTC time
+  };
+input group "5. Giờ vào lệnh · Trading hours (không áp dụng cho Mở Cửa London 7h · not for L07S)"
+input ENUM_CLMCA_HOURS InpHours          = HOURS_24; // Giờ vào lệnh · Hours
+input int              InpHourFrom       = 7;       // Từ giờ (0–23, tính cả) · From hour (incl.)
+input int              InpHourTo         = 19;      // Đến giờ (0–23, tính cả) · To hour (incl.)
 
 
 CTrade   g_trade;
 int      g_variant = FSR_VARIANT_C;
+string   g_version = "";
+
+//--- strategy_version ghi vào CSV: 24/24 ⇒ hậu tố _24h (như research); 7–19 UTC ⇒ tên gốc (khớp backtest cũ);
+//    khung khác ⇒ _h<từ>-<đến><utc|local>. L07S không có lọc giờ ⇒ luôn tên gốc.
+string BuildVersion()
+  {
+   string v = Fsr5_ModeVersion(g_mode);
+   if(g_mode == FSR_MODE_L07S)
+      return v;
+   if(InpHours == HOURS_24)
+      return v + "_24h";
+   if(InpHours == HOURS_UTC && InpHourFrom == FSR_HOUR_FIRST && InpHourTo == FSR_HOUR_LAST)
+      return v;
+   return v + StringFormat("_h%d-%d%s", InpHourFrom, InpHourTo, InpHours == HOURS_UTC ? "utc" : "local");
+  }
+
+//--- Giờ của nến c1 theo khung người dùng chọn. Giờ máy: lệch = TimeLocal() − TimeGMT() đo MỖI nến
+//    (máy đổi giờ mùa thì theo luôn), làm tròn tới phút rồi cộng vào giờ UTC của nến.
+int HourForFilter(const long c1_open_utc)
+  {
+   if(InpHours != HOURS_LOCAL)
+      return Fsr_HourOf(c1_open_utc);
+   long off = (long)TimeLocal() - (long)TimeGMT();
+   off = (long)MathRound(off / 60.0) * 60;
+   return Fsr_HourOf(c1_open_utc + off);
+  }
 int      g_mode = FSR_MODE_C_V1;
 long     g_magic = 0;
 string   g_dir = "";
@@ -146,7 +182,7 @@ void Incident(const string kind, const string detail)
    long now = ToUtc(TimeTradeServer());
    PrintFormat("[FSR] incident %s %s", kind, detail);
    AppendLine("incidents.csv", "time_utc,strategy_version,kind,detail",
-              Iso(now) + "," + Fsr5_ModeVersion(g_mode) + "," + kind + ",\"" + detail + "\"");
+              Iso(now) + "," + g_version + "," + kind + ",\"" + detail + "\"");
   }
 
 //+------------------------------------------------------------------+
@@ -443,7 +479,7 @@ void ManageLadder(const long &t[], const double &h[], const int n)
       bool ok = g_trade.PositionModify(ticket, target, 0.0);
       AppendLine("ladder_moves.csv",
                  "time_utc,strategy_version,forward_trade_id,old_sl,new_sl,mfe_R,best_bid_high,ok,retcode",
-                 Iso(now) + "," + Fsr5_ModeVersion(g_mode) + "," + IntegerToString(pid) + "," +
+                 Iso(now) + "," + g_version + "," + IntegerToString(pid) + "," +
                  D(sl) + "," + D(target) + "," + D(mfe, 4) + "," + D(best) + "," + IntegerToString(ok) + "," +
                  IntegerToString(g_trade.ResultRetcode()));
       if(ok)
@@ -508,9 +544,11 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
      }
    else
      {
-      reasons = Fsr_SignalReasons(Fsr_HourOf(t[i]), adx[i], dragon, slope, ready, trend,
+      // 24/24 ⇒ khung 0..23 (mọi giờ đều qua). Còn lại: giờ UTC hoặc giờ máy của nến c1, so với [Từ..Đến].
+      bool h24 = (InpHours == HOURS_24);
+      reasons = Fsr_SignalReasons(HourForFilter(t[i]), adx[i], dragon, slope, ready, trend,
                                   l[i - 1], e34h[i - 1], e89[i - 1], o[i], c[i], e34h[i], e89[i],
-                                  FSR_HOUR_FIRST, FSR_HOUR_LAST,   // khung giờ CỐ ĐỊNH theo chiến lược (7–19 UTC), không cho đổi
+                                  h24 ? 0 : InpHourFrom, h24 ? 23 : InpHourTo,
                                   min_dragon, min_slope);
       // C_V1/D_V1: Fsr5_Pullback = đúng nhánh gốc ⇒ bitmask y như EA 4 chế độ. P1b/P2: nới theo §2.
       reasons = Fsr_ApplyPullback(reasons, Fsr5_Pullback(g_mode, l, e34h, e89, atr, i));
@@ -527,11 +565,11 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
       losses = LossesOnUtcDay(Fsr_DayOf(t[i]));
       if(Fsr_LossCapHit(losses))
          reasons |= FSR_R_LOSS_CAP;
-      if(!Fsr_SlotFree(g_variant, open_now))
+      if(!(open_now >= 0 && open_now < Fsr5_MaxOpen(g_mode)))
         {
          reasons |= FSR_R_MAX_OPEN;
          if(g_variant == FSR_VARIANT_D)
-            Incident("max_open_hit", StringFormat("open=%d cap=%d", open_now, Fsr_MaxOpen(g_variant)));
+            Incident("max_open_hit", StringFormat("open=%d cap=%d", open_now, Fsr5_MaxOpen(g_mode)));
         }
      }
    if(reasons == 0)
@@ -540,7 +578,7 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
 
    AppendLine("signals.csv",
               "c1_open_utc,strategy_version,reasons,adx14,dragon_width,ema34_slope,ema34_high,ema89,h1_ready_bars,h4_ready_bars,htf_trend,open_positions,losses_today,action,atr14,min_dragon,min_slope,stop_buf,h4_close,h4_ema34,h4_ema89",
-              Iso(t[i]) + "," + Fsr5_ModeVersion(g_mode) + "," + IntegerToString(reasons) + "," +
+              Iso(t[i]) + "," + g_version + "," + IntegerToString(reasons) + "," +
               D(adx[i], 4) + "," + D(dragon, 4) + "," + D(slope, 4) + "," + D(e34h[i]) + "," + D(e89[i]) + "," +
               IntegerToString(j1 + 1) + "," + IntegerToString(j4 + 1) + "," + IntegerToString(trend) + "," +
               IntegerToString(open_now) + "," + IntegerToString(losses) + "," + action + "," +
@@ -751,7 +789,7 @@ bool LogClosed(const int k)
      }
    double pnl_r_price = has_r ? (exit_px - p.fill_price) / p.r_price : EMPTY_VALUE;
    double pnl_r_usd = (has_r && p.oz > 0) ? net / (p.oz * p.r_price) : EMPTY_VALUE;
-   string sv = Fsr5_ModeVersion(g_mode);
+   string sv = g_version;
    string id = IntegerToString(p.pos_id);
 
    AppendLine("trades.csv",
@@ -1013,6 +1051,39 @@ int OnInit()
    // Kiểm quy đổi giờ server → UTC khớp đồng hồ terminal (sai ⇒ lệch khung giờ 7–19 và biên H4).
    // Strategy Tester: TimeGMT() = giờ server giả lập (không có đồng hồ thật) ⇒ bỏ kiểm này.
    bool in_tester = (MQLInfoInteger(MQL_TESTER) != 0);
+   if(InpHours != HOURS_24 && g_mode != FSR_MODE_L07S && (InpHourFrom < 0 || InpHourFrom > 23 || InpHourTo < 0 || InpHourTo > 23))
+     {
+      Print("[FSR] ⛔ Giờ vào lệnh: Từ/Đến phải trong 0–23 · Trading hours: From/To must be 0–23.");
+      return INIT_FAILED;
+     }
+   // Strategy Tester: TimeLocal() là giờ giả lập, không phải giờ máy thật ⇒ lọc theo giờ máy sẽ sai.
+   if(in_tester && InpHours == HOURS_LOCAL && g_mode != FSR_MODE_L07S)
+     {
+      Print("[FSR] ⛔ Strategy Tester không có giờ máy thật — chọn \"Theo giờ UTC\" ở mục 5 · "
+            "In the Strategy Tester, pick \"UTC time\" in group 5.");
+      return INIT_FAILED;
+     }
+   g_version = BuildVersion();
+   if(g_mode == FSR_MODE_L07S)
+     {
+      if(InpHours != HOURS_24)
+         Print("[FSR] Mở Cửa London 7h luôn vào nến 07:00 UTC — bỏ qua mục 5 · London Open 7AM always trades the 07:00 UTC bar — group 5 ignored.");
+     }
+   else if(InpHours == HOURS_24)
+      Print("[FSR] Giờ vào lệnh: 24/24 · Trading hours: 24/7.");
+   else
+     {
+      long off = (long)TimeLocal() - (long)TimeGMT();
+      off = (long)MathRound(off / 60.0) * 60;
+      // Quy khung ra UTC theo PHÚT (máy lệch lẻ như UTC+5:30 ⇒ 07:00 giờ máy = 01:30 UTC). Giờ UTC ⇒ lệch 0.
+      long shift = (InpHours == HOURS_UTC) ? 0 : off;
+      long f_utc = ((InpHourFrom * 3600 - shift) % 86400 + 86400) % 86400;
+      long t_utc = ((InpHourTo * 3600 + 59 * 60 - shift) % 86400 + 86400) % 86400;   // mốc cuối khung = HH:59
+      PrintFormat("[FSR] Giờ vào lệnh · Trading hours: %02d:00–%02d:59 %s (máy · PC %s, UTC %s, lệch · offset %+.2fh) = %02d:%02d–%02d:%02d UTC",
+                  InpHourFrom, InpHourTo, InpHours == HOURS_UTC ? "UTC" : "giờ máy · PC time",
+                  TimeToString(TimeLocal(), TIME_MINUTES), TimeToString(TimeGMT(), TIME_MINUTES), off / 3600.0,
+                  (int)(f_utc / 3600), (int)(f_utc % 3600 / 60), (int)(t_utc / 3600), (int)(t_utc % 3600 / 60));
+     }
    if(!ResolveBrokerTime(in_tester))
       return INIT_FAILED;
    long est = ToUtc(TimeTradeServer());

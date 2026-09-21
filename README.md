@@ -21,6 +21,10 @@ Web (giải thích chi tiết, kết quả backtest, hành trình kiểm định
 Chỉ LONG. Mọi lệnh mở đều kèm **Stop-Loss cứng** = EMA89 − 0,956·ATR14. Không TP, không martingale, không grid.
 Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới hết ngày.
 
+**Giờ vào lệnh (mục 5):** mặc định **24/24**. Có thể giới hạn khung giờ `Từ`–`Đến` (0–23, tính cả hai đầu, cho vắt qua
+nửa đêm) **theo giờ máy tính** hoặc **theo giờ UTC**. Lúc khởi động EA in khung đã chọn ra giờ UTC để tự kiểm. Trong
+Strategy Tester phải chọn "Theo giờ UTC". `L07S` luôn vào nến 07:00 UTC nên bỏ qua mục này.
+
 ## Cài đặt
 **Cách nhanh (một file · single file):** tải `release/CLMCA.mq5`, bỏ vào `MQL5/Experts/` trong thư mục dữ liệu MT5
 (`File → Open Data Folder`), compile trong MetaEditor, rồi gắn vào chart **XAUUSD M15** và bật Algo Trading.
@@ -38,6 +42,7 @@ File này là `CLMCA.mq5` đã gộp sẵn `CLMCACore.mqh`, logic y hệt bản 
 | `InpBrokerTime` | Sàn: **Tự động** khi chạy thật; trong Strategy Tester chọn **Vantage/IC Markets… (giờ New York)** hoặc **Exness (GMT+0)** |
 | `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | rủi ro mỗi lệnh: $ cố định hoặc % số dư |
 | `InpMagic` | 0 = magic theo chế độ; nhiều chế độ chạy chung tài khoản không lẫn nhau |
+| `InpHours` / `InpHourFrom` / `InpHourTo` | giờ vào lệnh: 24/24 (mặc định), hoặc khung Từ–Đến theo giờ máy tính / giờ UTC |
 
 Tài khoản quỹ: đọc kỹ luật daily loss / max drawdown (static hay trailing) / giờ reset ngày của quỹ trước khi chạy.
 Backtest từng có drawdown vượt hạn mức của nhiều quỹ.

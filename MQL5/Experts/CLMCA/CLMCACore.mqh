@@ -570,6 +570,12 @@ bool Fsr5_ModeThresholds(const int mode, const double atr_c1, double &min_dragon
                              min_dragon, min_slope, stop_buf);
   }
 
+//--- Trần lệnh mở theo mode (C 3, D 20).
+int Fsr5_MaxOpen(const int mode)
+  {
+   return Fsr_MaxOpen(Fsr5_ModeVariant(mode));
+  }
+
 //--- Điều kiện pullback gốc (bản gốc) trên MỘT nến, so với EMA của chính nó.
 bool Fsr_PullbackBar(const double low, const double ema34h, const double ema89)
   {

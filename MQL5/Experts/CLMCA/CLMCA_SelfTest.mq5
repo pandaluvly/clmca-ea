@@ -218,5 +218,16 @@ void OnStart()
    Check(Fsr_ServerToUtcEu(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 10)       // Mỹ đã đổi giờ, châu Âu chưa
          && Fsr_ServerToUtcEu(Ep(2026, 4, 2, 12), 2, 3) == Ep(2026, 4, 2, 9)
          && Fsr_ServerToUtc(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 9), "TV-FSR-15 eu vs us gap");
+   // TV-FSR-16 trần lệnh theo mode: C 3, D 20
+   Check(Fsr5_MaxOpen(FSR_MODE_D_V1) == 20 && Fsr5_MaxOpen(FSR_MODE_C_V1) == 3
+         && Fsr5_MaxOpen(FSR_MODE_C_V1_P2) == 3 && Fsr5_MaxOpen(FSR_MODE_L07S) == 3, "TV-FSR-16 max open");
+   // TV-FSR-17 khung giờ: 0..23 = 24/24 (mọi giờ qua); vắt nửa đêm; ngoài khoảng ⇒ fail-closed
+   {
+    bool all = true;
+    for(int hh = 0; hh < 24; hh++)
+       all = all && Fsr_HourInWindow(hh, 0, 23);
+    Check(all && Fsr_HourInWindow(1, 21, 5) && !Fsr_HourInWindow(12, 21, 5) && !Fsr_HourInWindow(3, 0, 24),
+          "TV-FSR-17 hour window");
+   }
    PrintFormat("[FSR-SELFTEST] %s pass=%d fail=%d", g_fail == 0 ? "PASS" : "FAIL", g_pass, g_fail);
   }
