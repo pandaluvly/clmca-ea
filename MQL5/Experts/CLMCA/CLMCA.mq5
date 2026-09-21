@@ -17,15 +17,15 @@
 //| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
 //+------------------------------------------------------------------------------------+
 #property strict
-#property version   "1.00"
+#property version   "1.01"
 #property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
-#property description "Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
-#property description "EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
-#property description "5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
-#property description "Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
-#property description "Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
-#property description "Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
+#property description "• Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
+#property description "• EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
+#property description "• 5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
+#property description "• Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
+#property description "• Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
+#property description "• Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
 
 #include <Trade\Trade.mqh>
 #include "CLMCACore.mqh"

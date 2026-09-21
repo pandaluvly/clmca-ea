@@ -1,4 +1,4 @@
-// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 fd66a604d37c).
+// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 bcc980ef0b45).
 // Sửa mã ở MQL5/Experts/CLMCA/, rồi chạy lại tools/bundle.py.
 //+------------------------------------------------------------------------------------+
 //| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 5 chiến lược · 5 strategies     |
@@ -19,15 +19,15 @@
 //| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
 //+------------------------------------------------------------------------------------+
 #property strict
-#property version   "1.00"
+#property version   "1.01"
 #property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
-#property description "Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
-#property description "EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
-#property description "5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
-#property description "Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
-#property description "Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
-#property description "Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
+#property description "• Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
+#property description "• EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
+#property description "• 5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
+#property description "• Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
+#property description "• Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
+#property description "• Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
 
 #include <Trade\Trade.mqh>
 // ===== BEGIN CLMCACore.mqh (sha256 2c8fd999f3e3) — sinh tự động, đừng sửa tay =====
