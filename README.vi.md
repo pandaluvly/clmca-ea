@@ -44,14 +44,19 @@ Trading. Có thể nạp cài đặt sẵn: tab Inputs → **Load** → `CLMCA_<
 2. MetaEditor: compile `CLMCA_SelfTest.mq5`, kéo vào chart bất kỳ. Tab Experts phải ra `PASS … fail=0`.
 3. Compile `CLMCA.mq5`, gắn vào chart **XAUUSD M15** (Exness: `XAUUSDm`), bật Algo Trading.
 
-## Input quan trọng
-| Input | Ý nghĩa |
-|---|---|
-| `InpMode` | chọn 1 trong 5 chiến lược |
-| `InpBrokerTime` | Sàn: **Tự động** khi chạy thật; trong Strategy Tester chọn **Vantage/IC Markets… (giờ New York)**, **Exness (GMT+0)** hoặc **Quỹ/sàn giờ châu Âu** |
-| `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | rủi ro mỗi lệnh: $ cố định hoặc % số dư (tối đa 2% số dư) |
-| `InpMagic` | 0 = magic theo chiến lược; nhiều chiến lược chạy chung tài khoản không lẫn nhau |
-| `InpHours` / `InpHourFrom` / `InpHourTo` | giờ vào lệnh: 24/24 (mặc định), hoặc khung Từ–Đến theo giờ máy tính / giờ UTC |
+## Input (đúng như hộp Inputs của MT5)
+| Nhóm | Input (nhãn trong MT5) | Biến | Mặc định | Ý nghĩa |
+|---|---|---|---|---|
+| 1. Chiến lược | Chiến lược · Strategy | `InpMode` | Nhịp Hồi Chuẩn (C_V1) | chọn 1 trong 5 chiến lược |
+| 2. Rủi ro | Rủi ro theo · Risk by | `InpRiskMode` | Số tiền $ | rủi ro mỗi lệnh theo $ cố định hay % số dư |
+| | Lỗ tối đa $ · Max loss $ | `InpRiskUsd` | 50 | số $ mất nếu chạm cắt lỗ (chế độ $); tối đa 2% số dư |
+| | Lỗ tối đa % · Max loss % | `InpRiskPercent` | 0,1 | % số dư mất nếu chạm cắt lỗ (chế độ %), 0,01–2 |
+| 3. Sàn | Sàn · Broker | `InpBrokerTime` | Tự động | **Tự động** khi chạy thật; trong Strategy Tester chọn đúng sàn: Vantage/IC Markets… (giờ NY), Exness (GMT+0) hoặc Quỹ/sàn giờ châu Âu |
+| 4. Nâng cao | Trượt giá (point) · Slippage (pt) | `InpDeviationPoints` | 50 | trượt giá tối đa khi gửi lệnh; không cần đổi |
+| | Magic (0 = tự động · auto) | `InpMagic` | 0 | 0 = mỗi chiến lược một magic; chỉ đổi khi chạy 2 bản cùng chiến lược trên một tài khoản |
+| 5. Giờ vào lệnh | Giờ vào lệnh · Hours | `InpHours` | 24/24 | 24/24, theo giờ máy tính, hoặc theo giờ UTC (L07S không dùng) |
+| | Từ giờ · From hour | `InpHourFrom` | 7 | giờ đầu được vào lệnh (0–23, tính cả) |
+| | Đến giờ · To hour | `InpHourTo` | 19 | giờ cuối được vào lệnh (0–23, tính cả; cho vắt qua nửa đêm) |
 
 ## Tài khoản quỹ (prop firm)
 - Đọc kỹ luật daily loss, max drawdown (static hay trailing) và giờ reset ngày của quỹ trước khi chạy. Backtest từng có

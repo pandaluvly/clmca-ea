@@ -45,14 +45,19 @@ enable Algo Trading. You can load a preset from the Inputs tab → **Load** → 
 2. In MetaEditor, compile `CLMCA_SelfTest.mq5` and drag it onto any chart. The Experts tab must print `PASS … fail=0`.
 3. Compile `CLMCA.mq5` and attach it to an **XAUUSD M15** chart (Exness: `XAUUSDm`), enable Algo Trading.
 
-## Main inputs
-| Input | Meaning |
-|---|---|
-| `InpMode` | pick 1 of the 5 strategies |
-| `InpBrokerTime` | Broker: **Auto** when trading live; in the Strategy Tester pick **Vantage/IC Markets… (New York time)**, **Exness (GMT+0)** or **EU-time brokers / prop firms** |
-| `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | risk per trade: fixed $ or % of balance (capped at 2% of balance) |
-| `InpMagic` | 0 = magic per strategy; several strategies can share an account without mixing trades |
-| `InpHours` / `InpHourFrom` / `InpHourTo` | trading hours: 24/7 (default), or a From–To window in your computer's time / UTC |
+## Inputs (as shown in MT5)
+| Group | Input (label in MT5) | Variable | Default | Meaning |
+|---|---|---|---|---|
+| 1. Strategy | Chiến lược · Strategy | `InpMode` | Classic Pullback (C_V1) | pick 1 of the 5 strategies |
+| 2. Risk | Rủi ro theo · Risk by | `InpRiskMode` | Fixed $ | risk per trade as a fixed amount or as % of balance |
+| | Lỗ tối đa $ · Max loss $ | `InpRiskUsd` | 50 | loss if the stop-loss is hit (fixed-$ mode); capped at 2% of balance |
+| | Lỗ tối đa % · Max loss % | `InpRiskPercent` | 0.1 | loss as % of balance (%-mode), 0.01–2 |
+| 3. Broker | Sàn · Broker | `InpBrokerTime` | Auto | **Auto** when trading live; in the Strategy Tester pick your broker: Vantage/IC Markets… (NY time), Exness (GMT+0) or EU-time brokers / prop firms |
+| 4. Advanced | Trượt giá (point) · Slippage (pt) | `InpDeviationPoints` | 50 | max slippage when sending an order; no need to change |
+| | Magic (0 = tự động · auto) | `InpMagic` | 0 | 0 = one magic per strategy; change only to run two copies of the same strategy on one account |
+| 5. Trading hours | Giờ vào lệnh · Hours | `InpHours` | 24/7 | 24/7, your computer's time, or UTC (not used by L07S) |
+| | Từ giờ · From hour | `InpHourFrom` | 7 | first hour allowed (0–23, included) |
+| | Đến giờ · To hour | `InpHourTo` | 19 | last hour allowed (0–23, included; may wrap past midnight) |
 
 ## Prop-firm accounts
 - Read your firm's rules first: daily loss, static vs trailing max drawdown, daily reset time. Backtests have had
