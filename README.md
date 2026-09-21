@@ -1,89 +1,93 @@
-# Có Làm Mới Có Ăn (CLMCA): EA MetaTrader 5 cho XAUUSD M15
+# CLMCA ("Có Làm Mới Có Ăn") — MetaTrader 5 EA for XAUUSD M15
 
-> ⚠️ **Đọc trước khi dùng.** EA này **chưa qua kiểm định thống kê**. Kết quả backtest là in-sample: quá khứ không đảm bảo
-> tương lai. Chuỗi thua 40–65 lệnh liên tiếp và drawdown kéo dài 2,5–4 năm đã từng xảy ra trong dữ liệu lịch sử.
-> Có thể mất toàn bộ vốn. Đây không phải lời khuyên đầu tư. **Hãy chạy trên tài khoản demo trước.**
->
-> ⚠️ **Read first.** This EA has **not passed statistical validation**. Backtests are in-sample. Losing streaks of 40–65
-> trades and 2.5–4-year drawdowns occurred historically. You can lose all your capital. Not investment advice. **Demo first.**
+**English** · [Tiếng Việt](README.vi.md)
 
-Web (giải thích chi tiết, kết quả backtest, hành trình kiểm định): https://clmca.pandify.io
+> ⚠️ **Read first.** This EA has **not passed statistical validation**. Backtests are in-sample: the past does not
+> guarantee the future. Losing streaks of 40–65 trades and drawdowns lasting 2.5–4 years have happened in historical
+> data. You can lose all your capital. This is not investment advice. **Run it on a demo account first.**
 
-## 5 chế độ (`InpMode`)
-| Mode | Điểm vào | Lệnh mở tối đa | Thang dời SL |
-|---|---|---|---|
-| `C_V1` | Pullback về Dragon EMA34/EMA89, nến xanh xác nhận, lọc ADX · H1/H4 · độ rộng Dragon · slope (ngưỡng × ATR14) | 3 | lời 2R ⇒ SL về hoà vốn, 3R ⇒ +1R, 4R ⇒ +2R… |
-| `C_V1_P1b` | như C_V1, pullback nới thêm "gần chạm" (≤ EMA34 high + 0,5·ATR14) | 3 | như C_V1 |
-| `C_V1_P2` | như C_V1, pullback ở bất kỳ nến nào trong 3 nến trước tín hiệu | 3 | như C_V1 |
-| `D_V1` | như C_V1, mỗi tín hiệu một lệnh | 20 | lời 1R ⇒ hoà vốn, 3R ⇒ +1R… |
-| `L07S` | nến M15 lúc 07:00 UTC (T2–T6), H4 trên EMA34 và EMA89, slope đủ | 3 | như C_V1 |
+Website (detailed explanation, backtest results, validation journey): https://clmca.pandify.io
 
-Chỉ LONG. Mọi lệnh mở đều kèm **Stop-Loss cứng** = EMA89 − 0,956·ATR14. Không TP, không martingale, không grid.
-Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới hết ngày.
+A free, open-source EA by [Pandify](https://pandify.io), built as open trading research: every result is published,
+including the tests that failed. Thanks to the Cần Cù Bù Siêng Năng community.
 
-**Giờ vào lệnh (mục 5):** mặc định **24/24**. Có thể giới hạn khung giờ `Từ`–`Đến` (0–23, tính cả hai đầu, cho vắt qua
-nửa đêm) **theo giờ máy tính** hoặc **theo giờ UTC**. Lúc khởi động EA in khung đã chọn ra giờ UTC để tự kiểm. Trong
-Strategy Tester phải chọn "Theo giờ UTC". `L07S` luôn vào nến 07:00 UTC nên bỏ qua mục này.
+## Download
+- **Latest release:** https://github.com/pandaluvly/clmca-ea/releases/latest
+  - `CLMCA.ex5` — pre-compiled, ready to use
+  - `CLMCA.mq5` — the same EA as a single source file, if you prefer to compile it yourself
+  - `CLMCA_<strategy>.set` — preset inputs for each strategy
+  - `SHA256SUMS` — checksums to verify your download
 
-## Cài đặt
-**Cách nhanh (một file · single file):** tải `release/CLMCA.mq5`, bỏ vào `MQL5/Experts/` trong thư mục dữ liệu MT5
-(`File → Open Data Folder`), compile trong MetaEditor, rồi gắn vào chart **XAUUSD M15** và bật Algo Trading.
-File này là `CLMCA.mq5` đã gộp sẵn `CLMCACore.mqh`, logic y hệt bản nhiều file.
+## 5 strategies (`InpMode`)
+| Mode | Name | Entry | Max open trades | Stop-loss ladder |
+|---|---|---|---|---|
+| `C_V1` | Classic Pullback | Pullback to the EMA34/EMA89 "Dragon", bullish confirmation candle, filters on ADX · H1/H4 trend · Dragon width · slope (thresholds × ATR14) | 3 | at +2R ⇒ SL to break-even, +3R ⇒ +1R, +4R ⇒ +2R… |
+| `C_V1_P1b` | Near-Touch Pullback | as C_V1, pullback also accepted when "near" (≤ EMA34 high + 0.5·ATR14) | 3 | as C_V1 |
+| `C_V1_P2` | 3-Bar Pullback | as C_V1, pullback on any of the 3 candles before the signal | 3 | as C_V1 |
+| `D_V1` | Every Signal | as C_V1, one trade per signal | 20 | at +1R ⇒ break-even, +3R ⇒ +1R… |
+| `L07S` | London Open 7AM | M15 candle at 07:00 UTC (Mon–Fri), H4 above EMA34 and EMA89, enough slope | 3 | as C_V1 |
 
-**Cách đầy đủ (có self-test):**
-1. Copy thư mục `MQL5/Experts/CLMCA/` vào thư mục dữ liệu MT5 (`File → Open Data Folder`).
-2. MetaEditor: compile `CLMCA_SelfTest.mq5`, kéo vào chart bất kỳ. Tab Experts phải ra `PASS … fail=0`.
-3. Compile `CLMCA.mq5`, gắn vào chart **XAUUSD M15** (Exness: `XAUUSDm`), bật Algo Trading.
+LONG only. Every trade has a **hard stop-loss** = EMA89 − 0.956·ATR14. No take-profit, no martingale, no grid.
+After 2 losing trades in one day (UTC), the EA stops opening new trades until the day ends.
 
-## Input quan trọng
-| Input | Ý nghĩa |
+**Trading hours (group 5):** **24/7** by default. You can limit entries to a `From`–`To` window (0–23, both ends
+included, may wrap past midnight) in **your computer's time** or in **UTC**. On start, the EA prints the chosen window
+converted to UTC so you can check it. In the Strategy Tester you must pick "UTC time". `L07S` always trades the
+07:00 UTC candle and ignores this group.
+
+## Install
+**Quick (single file):** download `CLMCA.ex5` from the release page, put it in `MQL5/Experts/` inside the MT5 data
+folder (`File → Open Data Folder`), restart MT5 or refresh the Navigator, then attach it to an **XAUUSD M15** chart and
+enable Algo Trading. You can load a preset from the Inputs tab → **Load** → `CLMCA_<strategy>.set`.
+
+**Full (with self-test):**
+1. Copy the `MQL5/Experts/CLMCA/` folder into the MT5 data folder.
+2. In MetaEditor, compile `CLMCA_SelfTest.mq5` and drag it onto any chart. The Experts tab must print `PASS … fail=0`.
+3. Compile `CLMCA.mq5` and attach it to an **XAUUSD M15** chart (Exness: `XAUUSDm`), enable Algo Trading.
+
+## Main inputs
+| Input | Meaning |
 |---|---|
-| `InpMode` | chọn 1 trong 5 chế độ |
-| `InpBrokerTime` | Sàn: **Tự động** khi chạy thật; trong Strategy Tester chọn **Vantage/IC Markets… (giờ New York)** hoặc **Exness (GMT+0)** |
-| `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | rủi ro mỗi lệnh: $ cố định hoặc % số dư |
-| `InpMagic` | 0 = magic theo chế độ; nhiều chế độ chạy chung tài khoản không lẫn nhau |
-| `InpHours` / `InpHourFrom` / `InpHourTo` | giờ vào lệnh: 24/24 (mặc định), hoặc khung Từ–Đến theo giờ máy tính / giờ UTC |
+| `InpMode` | pick 1 of the 5 strategies |
+| `InpBrokerTime` | Broker: **Auto** when trading live; in the Strategy Tester pick **Vantage/IC Markets… (New York time)**, **Exness (GMT+0)** or **EU-time brokers / prop firms** |
+| `InpRiskMode` / `InpRiskUsd` / `InpRiskPercent` | risk per trade: fixed $ or % of balance (capped at 2% of balance) |
+| `InpMagic` | 0 = magic per strategy; several strategies can share an account without mixing trades |
+| `InpHours` / `InpHourFrom` / `InpHourTo` | trading hours: 24/7 (default), or a From–To window in your computer's time / UTC |
 
-## Tài khoản quỹ (prop firm) · Prop-firm accounts
-- Đọc kỹ luật daily loss, max drawdown (static hay trailing) và giờ reset ngày của quỹ trước khi chạy. Backtest từng có
-  drawdown vượt hạn mức của nhiều quỹ.
-- **Nhiều quỹ cấm EA dùng đại trà** hoặc cấm nhiều tài khoản có lệnh giống hệt nhau. Mọi người chạy CLMCA cùng chiến
-  lược sẽ có lệnh gần như trùng nhau. Bạn có thể bị từ chối payout hoặc bị khoá tài khoản — **bạn tự chịu rủi ro này**.
-- Read your firm's rules (daily loss, static vs trailing drawdown, daily reset time) first. **Many prop firms ban
-  mass-distributed EAs** or identical trades across accounts. Everyone running the same CLMCA strategy gets nearly
-  identical trades; you may be denied a payout or lose the account. **That risk is yours.**
+## Prop-firm accounts
+- Read your firm's rules first: daily loss, static vs trailing max drawdown, daily reset time. Backtests have had
+  drawdowns beyond many firms' limits.
+- **Many prop firms ban mass-distributed EAs** or identical trades across accounts. Everyone running the same CLMCA
+  strategy gets nearly identical trades; you may be denied a payout or lose the account. **That risk is yours.**
 
-## Ủng hộ · Donate
-CLMCA miễn phí. Nếu thấy hữu ích, bạn có thể ủng hộ qua mục Donate trên web (QR ngân hàng / PayPal):
-https://clmca.pandify.io/vi/#contact · If you find it useful: https://clmca.pandify.io/en/#contact
-Ủng hộ không đổi gì về EA: không có bản "trả phí", không có tín hiệu riêng · Donating unlocks nothing: no paid tier, no private signals.
-
-## Hỗ trợ · Support
-Hỗ trợ khi có thể, không cam kết thời gian trả lời. Báo lỗi qua GitHub Issues, kèm sha256 của file bạn đang chạy và
-đoạn log tab Experts.
-Support on a best-effort basis, no response time guaranteed. Report bugs via GitHub Issues with the sha256 of the file
-you run and the Experts-tab log.
-
-## Kiểm file · Verify your download
-So sha256 file bạn tải với `release/SHA256SUMS` (và bảng trên web) · Compare the sha256 of your file with `release/SHA256SUMS`:
+## Verify your download
+Compare the sha256 of your file with `SHA256SUMS` (also listed on the website):
 - Windows: `certutil -hashfile CLMCA.ex5 SHA256`
 - macOS / Linux: `shasum -a 256 CLMCA.ex5`
 
-Lúc khởi động, tab Experts in `[CLMCA] build <ngày giờ>` — gửi kèm dòng này khi báo lỗi · On start, the Experts tab prints
-`[CLMCA] build <date time>`; include it when reporting a bug.
+On start, the Experts tab prints `[CLMCA] build <date time>`; include this line when reporting a bug.
 
-## Bản gốc · Official copy
-Chỉ tải từ repo này hoặc https://clmca.pandify.io và so sha256 với trang web. Bản đã sửa không phải bản gốc; nếu bạn
-sửa code, hãy đổi tên EA và magic.
-Download only from this repo or https://clmca.pandify.io and check the sha256. A modified copy is not the original; if
-you change the code, rename the EA and change the magic.
+## Official copy
+Download only from this repo or https://clmca.pandify.io and check the sha256. A modified copy is not the original;
+if you change the code, rename the EA and change the magic.
 
-## File ghi nhận
-EA ghi CSV vào `MQL5/Files/fsr5_<MODE>/`: `trades.csv`, `signals.csv` (mọi nến, kèm lý do không vào lệnh), `ladder_moves.csv`, `lifecycle.csv`, `incidents.csv`.
+## Log files
+The EA writes CSV files to `MQL5/Files/fsr5_<MODE>/`: `trades.csv`, `signals.csv` (every candle, with the reason when
+no trade was opened), `ladder_moves.csv`, `lifecycle.csv`, `incidents.csv`.
+
+## Donate
+CLMCA is free. If you find it useful, you can support it via the Donate section of the website (PayPal / bank QR):
+https://clmca.pandify.io/en/#contact
+Donating unlocks nothing: there is no paid version and no private signals.
+
+## Support
+Best-effort, no response time guaranteed. Report bugs via GitHub Issues, with the sha256 of the file you run and the
+Experts-tab log.
 
 ## License
-MIT, xem `LICENSE`. Phần mềm được cung cấp "nguyên trạng", không bảo hành · provided "as is", without warranty.
+MIT — see `LICENSE`. The software is provided "as is", without warranty.
 
-## Dành cho người sửa mã · For contributors
-Sửa trong `MQL5/Experts/CLMCA/`, **không sửa tay** `release/CLMCA.mq5`. Sau khi sửa, chạy `python3 tools/bundle.py` để
-sinh lại file một file. Trước khi phát hành: backtest bản gộp và bản nhiều file trên cùng dải ngày, `trades.csv` phải trùng từng lệnh.
+## For contributors
+Edit files in `MQL5/Experts/CLMCA/`; **do not edit** `release/CLMCA.mq5` by hand. After editing, run
+`python3 tools/bundle.py` to regenerate the single-file build. Before a release, backtest the single-file build and the
+multi-file build on the same date range: `trades.csv` must match trade by trade.
