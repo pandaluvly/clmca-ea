@@ -17,7 +17,7 @@
 //| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
 //+------------------------------------------------------------------------------------+
 #property strict
-#property version   "1.01"
+#property version   "1.02"
 #property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
 #property description "• Mã nguồn · Source: github.com/pandaluvly/clmca-ea"

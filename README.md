@@ -17,6 +17,7 @@ including the tests that failed. Thanks to the Cần Cù Bù Siêng Năng commun
   - `CLMCA.mq5` — the same EA as a single source file, if you prefer to compile it yourself
   - `CLMCA_<strategy>.set` — preset inputs for each strategy
   - `SHA256SUMS` — checksums to verify your download
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
 ## 5 strategies (`InpMode`)
 | Mode | Name | Entry | Max open trades | Stop-loss ladder |

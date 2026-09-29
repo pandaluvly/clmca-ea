@@ -17,6 +17,7 @@ khai, kể cả các phép kiểm bị trượt. Cảm ơn cộng đồng Cần 
   - `CLMCA.mq5` — cùng EA đó dạng một file mã nguồn, nếu bạn muốn tự compile
   - `CLMCA_<chiến lược>.set` — cài đặt sẵn cho từng chiến lược
   - `SHA256SUMS` — mã kiểm tra để so file tải về
+- **Nhật ký phiên bản:** [CHANGELOG.md](CHANGELOG.md)
 
 ## 5 chiến lược (`InpMode`)
 | Mode | Tên | Điểm vào | Lệnh mở tối đa | Thang dời SL |
