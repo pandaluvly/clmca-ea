@@ -224,7 +224,7 @@ void SaveState()
       FileWriteString(h, StringFormat("%I64d;%I64d;%I64d;%I64d;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%s;%I64d;%d;%d;%d;%s;%s;%s;%s;%s;%s\r\n",
                                       p.pos_id, p.signal_utc, p.send_utc, p.fill_utc,
                                       D(p.ask_open_next), D(p.ask_at_send), D(p.fill_price), D(p.sl0),
-                                      D(p.r_price), D(p.cur_sl), D(p.lots, 2), p.oz, p.open_at_entry,
+                                      D(p.r_price), D(p.cur_sl), D(p.lots, VolDigits()), p.oz, p.open_at_entry,
                                       p.losses_at_entry, D(p.spread_entry), p.latency_ms, p.moves, p.excluded,
                                       p.miss_bars, D(p.atr_sig, 6), D(p.dragon_sig, 6), D(p.slope_sig, 6),
                                       D(p.h4c_sig), D(p.h4e34_sig), D(p.h4e89_sig)));
@@ -599,6 +599,33 @@ void EvaluateAndEnter(const long &t[], const double &o[], const double &h[], con
               D(h4c_v) + "," + D(h4e34_v) + "," + D(h4e89_v));
   }
 
+//--- Tiền (đơn vị tiền TÀI KHOẢN) mỗi 1 lot khi giá chạy 1.0 — đọc từ sàn, không giả định. 0 nếu sàn chưa báo.
+double MoneyPerLotPerPrice()
+  {
+   double tv = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE_LOSS);
+   double ts = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+   return (tv > 0.0 && ts > 0.0) ? tv / ts : 0.0;
+  }
+
+//--- Số chữ số thập phân của bước lot sàn (tối thiểu 2 — giữ nguyên định dạng cũ cho bước 0.01).
+int VolDigits()
+  {
+   double step = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
+   int d = 2;
+   while(d < 8 && step > 0.0 && MathAbs(step * MathPow(10, d) - MathRound(step * MathPow(10, d))) > 1e-9)   // 1e-9: bước 1e-8 ở d=2 lệch 1e-6 vẫn phải đi tiếp
+      d++;
+   return d;
+  }
+
+//--- true ⇔ 1 oz (1 đơn vị contract) lãi/lỗ đúng 1 đơn vị tiền tài khoản khi giá chạy 1 (XAUUSD, tài khoản USD thường).
+// false ⇒ tài khoản cent / tiền khác USD: phải tính lot theo MoneyPerLotPerPrice (29/09: XAUUSDc 1 lot = 1000 cent/$1,
+// công thức oz/contract cho risk thật ≈ 87 % số dư). Sàn chưa báo tick value (0) ⇒ giữ công thức cũ như trước bản vá.
+bool OzIsAccountMoney(const double contract)
+  {
+   double mpl = MoneyPerLotPerPrice();
+   return !(mpl > 0.0) || !(contract > 0.0) || MathAbs(mpl / contract - 1.0) < 1e-6;
+  }
+
 //--- Risk $ cho lệnh sắp mở: $ cố định hoặc % SỐ DƯ (balance, không phải equity) tại lúc vào.
 double RiskUsdNow()
   {
@@ -635,19 +662,40 @@ string TryEnter(const long signal_utc, const double ema89_c1, const double stop_
       return "skip_stop_not_below_entry";
    stop = NormalizeDouble(stop, _Digits);
    double r_price = tk.ask - stop;
-   int oz = Fsr_Oz(RiskUsdNow(), r_price);
-   if(oz < 1)
-      return "skip_oz_lt_1";
    double contract = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
    double step = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
    double vmin = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
-   if(!(contract > 0.0) || !(step > 0.0))
+   int oz = 0;
+   double lots = 0.0;
+   if(OzIsAccountMoney(contract))
      {
-      Incident("symbol_spec_invalid", StringFormat("contract=%s step=%s", D(contract), D(step)));
-      return "skip_symbol_spec";
+      // Tài khoản USD thường: 1 oz lãi/lỗ đúng 1 đơn vị tiền khi giá chạy 1 ⇒ công thức cũ, từng phép tính giữ nguyên.
+      oz = Fsr_Oz(RiskUsdNow(), r_price);
+      if(oz < 1)
+         return "skip_oz_lt_1";
+      if(!(contract > 0.0) || !(step > 0.0))
+        {
+         Incident("symbol_spec_invalid", StringFormat("contract=%s step=%s", D(contract), D(step)));
+         return "skip_symbol_spec";
+        }
+      lots = NormalizeDouble(MathFloor((oz / contract) / step + 1e-9) * step, 2);
      }
-   double lots = MathFloor((oz / contract) / step + 1e-9) * step;
-   lots = NormalizeDouble(lots, 2);
+   else
+     {
+      // Tài khoản cent / tiền tệ khác USD: tính theo TIỀN THẬT mỗi lot (tick value) — contract size không còn là $.
+      double mpl = MoneyPerLotPerPrice();
+      if(!(mpl > 0.0) || !(contract > 0.0) || !(step > 0.0) || !(r_price > 0.0))
+        {
+         Incident("symbol_spec_invalid", StringFormat("contract=%s step=%s mpl=%s", D(contract), D(step), D(mpl)));
+         return "skip_symbol_spec";
+        }
+      lots = MathFloor(RiskUsdNow() / (r_price * mpl) / step + 1e-9) * step;
+      lots = MathMin(lots, MathFloor((FSR_MAX_OZ / contract) / step + 1e-9) * step);
+      lots = NormalizeDouble(lots, VolDigits());   // làm tròn theo BƯỚC lot của sàn (có thể < 0.01), không cố định 2
+      oz = (int)MathRound(lots * contract);
+      if(lots < step)
+         return "skip_oz_lt_1";
+     }
    if(lots < vmin)
       return "skip_lots_lt_min";
    double pt = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
@@ -801,7 +849,9 @@ bool LogClosed(const int k)
       lvl = 0;
      }
    double pnl_r_price = has_r ? (exit_px - p.fill_price) / p.r_price : EMPTY_VALUE;
-   double pnl_r_usd = (has_r && p.oz > 0) ? net / (p.oz * p.r_price) : EMPTY_VALUE;
+   double risk_money = OzIsAccountMoney(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE))
+                       ? p.oz * p.r_price : p.lots * MoneyPerLotPerPrice() * p.r_price;
+   double pnl_r_usd = (has_r && risk_money > 0.0) ? net / risk_money : EMPTY_VALUE;
    string sv = g_version;
    string id = IntegerToString(p.pos_id);
 
@@ -818,7 +868,7 @@ bool LogClosed(const int k)
               Iso(p.fill_utc) + "," + D(p.fill_price - p.ask_at_send) + "," + D((p.fill_price - p.ask_at_send) / p.r_price, 4) + "," +
               D(p.fill_price - p.ask_open_next) + "," +
               IntegerToString(p.latency_ms) + "," + D(p.spread_entry) + "," + D(p.sl0) + "," + D(p.sl0) + "," +
-              D(p.r_price) + "," + D(p.r_price) + "," + D(p.lots, 2) + "," + IntegerToString(p.oz) + "," +
+              D(p.r_price) + "," + D(p.r_price) + "," + D(p.lots, VolDigits()) + "," + IntegerToString(p.oz) + "," +
               IntegerToString(p.open_at_entry) + "," + IntegerToString(p.losses_at_entry) + "," + IntegerToString(p.moves) + "," +
               D(p.cur_sl) + "," + Iso(exit_utc) + "," + why + "," + D(exit_px) + "," + D(exit_px) + "," +
               D(exit_px - p.cur_sl) + "," + D(spread_exit) + "," + D(commission, 2) + "," + D(swap, 2) + "," + D(net, 2) + "," +
