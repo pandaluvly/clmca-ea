@@ -1,6 +1,6 @@
 # Changelog · Nhật ký phiên bản
 
-## v1.1.0 — 2026-10-11
+## v1.1.0 — 2026-10-10
 
 **New strategy `D_V1_CAP3` — Every Signal Max 3** (`InpMode` = 8, magic 88180516): exactly the D_V1 rules, but at most
 3 open trades instead of 20. It was the research candidate previously shown on the website as "FWD-01"; it is still
