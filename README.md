@@ -19,7 +19,7 @@ including the tests that failed. Thanks to the Cần Cù Bù Siêng Năng commun
   - `SHA256SUMS` — checksums to verify your download
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
-## 5 strategies (`InpMode`)
+## 6 strategies (`InpMode`)
 | Mode | Name | Entry | Max open trades | Stop-loss ladder |
 |---|---|---|---|---|
 | `C_V1` | Classic Pullback | Pullback to the EMA34/EMA89 "Dragon", bullish confirmation candle, filters on ADX · H1/H4 trend · Dragon width · slope (thresholds × ATR14) | 3 | at +2R ⇒ SL to break-even, +3R ⇒ +1R, +4R ⇒ +2R… |
@@ -27,6 +27,7 @@ including the tests that failed. Thanks to the Cần Cù Bù Siêng Năng commun
 | `C_V1_P2` | 3-Bar Pullback | as C_V1, pullback on any of the 3 candles before the signal | 3 | as C_V1 |
 | `D_V1` | Every Signal | as C_V1, one trade per signal | 20 | at +1R ⇒ break-even, +3R ⇒ +1R… |
 | `L07S` | London Open 7AM | M15 candle at 07:00 UTC (Mon–Fri), H4 above EMA34 and EMA89, enough slope | 3 | as C_V1 |
+| `D_V1_CAP3` | Every Signal Max 3 | exactly as D_V1 | **3** | as D_V1 |
 
 LONG only. Every trade has a **hard stop-loss** = EMA89 − 0.956·ATR14. No take-profit, no martingale, no grid.
 After 2 losing trades in one day (UTC), the EA stops opening new trades until the day ends.
@@ -49,7 +50,7 @@ enable Algo Trading. You can load a preset from the Inputs tab → **Load** → 
 ## Inputs (as shown in MT5)
 | Group | Input (label in MT5) | Variable | Default | Meaning |
 |---|---|---|---|---|
-| 1. Strategy | Chiến lược · Strategy | `InpMode` | Classic Pullback (C_V1) | pick 1 of the 5 strategies |
+| 1. Strategy | Chiến lược · Strategy | `InpMode` | Classic Pullback (C_V1) | pick 1 of the 6 strategies |
 | 2. Risk | Rủi ro theo · Risk by | `InpRiskMode` | Fixed $ | risk per trade as a fixed amount or as % of balance |
 | | Lỗ tối đa $ · Max loss $ | `InpRiskUsd` | 50 | loss if the stop-loss is hit (fixed-$ mode); capped at 2% of balance |
 | | Lỗ tối đa % · Max loss % | `InpRiskPercent` | 0.1 | loss as % of balance (%-mode), 0.01–2 |

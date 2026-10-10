@@ -518,6 +518,8 @@ string Fsr_StrategyVersion(const int variant)
 #define FSR_MODE_C_V1_P1B   5
 #define FSR_MODE_C_V1_P2    6
 #define FSR_MODE_L07S       7
+#define FSR_MODE_D_V1_CAP3  8   // D_V1 y hệt, chỉ khác trần 3 lệnh mở (research RL-14)
+#define FSR_MAX_OPEN_D_CAP3 3
 // §2a P1b: "gần chạm" = c2.low ≤ ema34_high(c2) + 0.5·ATR14(c2). CHỐT, không dò.
 #define FSR_P1B_NEAR_K      0.5
 // §2b P2: pullback ở ít nhất một trong c2, c3, c4.
@@ -529,13 +531,13 @@ string Fsr_StrategyVersion(const int variant)
 bool Fsr5_ModeValid(const int mode)
   {
    return mode == FSR_MODE_C_V1 || mode == FSR_MODE_D_V1 || mode == FSR_MODE_C_V1_P1B
-          || mode == FSR_MODE_C_V1_P2 || mode == FSR_MODE_L07S;
+          || mode == FSR_MODE_C_V1_P2 || mode == FSR_MODE_L07S || mode == FSR_MODE_D_V1_CAP3;
   }
 
-// Mọi mode trừ D_V1 dùng thang C + trần 3 lệnh.
+// Mọi mode trừ D_V1 / D_V1_CAP3 dùng thang C + trần 3 lệnh.
 int Fsr5_ModeVariant(const int mode)
   {
-   return mode == FSR_MODE_D_V1 ? FSR_VARIANT_D : FSR_VARIANT_C;
+   return (mode == FSR_MODE_D_V1 || mode == FSR_MODE_D_V1_CAP3) ? FSR_VARIANT_D : FSR_VARIANT_C;
   }
 
 string Fsr5_ModeName(const int mode)
@@ -545,6 +547,7 @@ string Fsr5_ModeName(const int mode)
    if(mode == FSR_MODE_C_V1_P1B) return "C_V1_P1b";
    if(mode == FSR_MODE_C_V1_P2) return "C_V1_P2";
    if(mode == FSR_MODE_L07S) return "L07S";
+   if(mode == FSR_MODE_D_V1_CAP3) return "D_V1_CAP3";
    return "INVALID";
   }
 
@@ -555,10 +558,11 @@ string Fsr5_ModeVersion(const int mode)
    if(mode == FSR_MODE_C_V1_P1B) return "cand_c_step_r_v1_p1b";
    if(mode == FSR_MODE_C_V1_P2) return "cand_c_step_r_v1_p2";
    if(mode == FSR_MODE_L07S) return "l07s_v1";
+   if(mode == FSR_MODE_D_V1_CAP3) return "cand_d_step_r_v1_cap3";
    return "invalid";
   }
 
-// Cả 5 mode đều là v1: ngưỡng = K × ATR14(c1), đúng phép tính của C_V1 (L07S chỉ dùng min_slope + stop_buf).
+// Cả 6 mode đều là v1: ngưỡng = K × ATR14(c1), đúng phép tính của C_V1 (L07S chỉ dùng min_slope + stop_buf).
 bool Fsr5_ModeThresholds(const int mode, const double atr_c1, double &min_dragon, double &min_slope, double &stop_buf)
   {
    if(!Fsr5_ModeValid(mode))
@@ -568,13 +572,15 @@ bool Fsr5_ModeThresholds(const int mode, const double atr_c1, double &min_dragon
       stop_buf = 0.0;
       return false;
      }
-   return Fsr_ModeThresholds(mode == FSR_MODE_D_V1 ? FSR_MODE_D_V1 : FSR_MODE_C_V1, atr_c1,
+   return Fsr_ModeThresholds((mode == FSR_MODE_D_V1 || mode == FSR_MODE_D_V1_CAP3) ? FSR_MODE_D_V1 : FSR_MODE_C_V1, atr_c1,
                              min_dragon, min_slope, stop_buf);
   }
 
-//--- Trần lệnh mở theo mode (C 3, D 20).
+//--- Trần lệnh mở theo mode: D_V1_CAP3 = 3, còn lại theo variant (C 3, D 20).
 int Fsr5_MaxOpen(const int mode)
   {
+   if(mode == FSR_MODE_D_V1_CAP3)
+      return FSR_MAX_OPEN_D_CAP3;
    return Fsr_MaxOpen(Fsr5_ModeVariant(mode));
   }
 

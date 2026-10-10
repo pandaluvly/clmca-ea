@@ -218,9 +218,18 @@ void OnStart()
    Check(Fsr_ServerToUtcEu(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 10)       // Mỹ đã đổi giờ, châu Âu chưa
          && Fsr_ServerToUtcEu(Ep(2026, 4, 2, 12), 2, 3) == Ep(2026, 4, 2, 9)
          && Fsr_ServerToUtc(Ep(2026, 3, 20, 12), 2, 3) == Ep(2026, 3, 20, 9), "TV-FSR-15 eu vs us gap");
-   // TV-FSR-16 trần lệnh theo mode: C 3, D 20
-   Check(Fsr5_MaxOpen(FSR_MODE_D_V1) == 20 && Fsr5_MaxOpen(FSR_MODE_C_V1) == 3
+   // TV-FSR-16 trần lệnh theo mode: C 3, D 20; D_V1_CAP3 như D_V1 (variant, ngưỡng, thang) nhưng trần 3
+   Check(Fsr5_ModeValid(FSR_MODE_D_V1_CAP3) && Fsr5_ModeVariant(FSR_MODE_D_V1_CAP3) == FSR_VARIANT_D
+         && Fsr5_ModeName(FSR_MODE_D_V1_CAP3) == "D_V1_CAP3"
+         && Fsr5_ModeVersion(FSR_MODE_D_V1_CAP3) == "cand_d_step_r_v1_cap3", "TV-FSR-16 cap3 map");
+   Check(Fsr5_MaxOpen(FSR_MODE_D_V1_CAP3) == 3 && Fsr5_MaxOpen(FSR_MODE_D_V1) == 20 && Fsr5_MaxOpen(FSR_MODE_C_V1) == 3
          && Fsr5_MaxOpen(FSR_MODE_C_V1_P2) == 3 && Fsr5_MaxOpen(FSR_MODE_L07S) == 3, "TV-FSR-16 max open");
+   {
+    double d1, s1, b1, d2, s2, b2;
+    Fsr5_ModeThresholds(FSR_MODE_D_V1, 2.0, d1, s1, b1);
+    Fsr5_ModeThresholds(FSR_MODE_D_V1_CAP3, 2.0, d2, s2, b2);
+    Check(d1 == d2 && s1 == s2 && b1 == b2 && d1 > 0.0, "TV-FSR-16 cap3 thresholds = D_V1");
+   }
    // TV-FSR-17 khung giờ: 0..23 = 24/24 (mọi giờ qua); vắt nửa đêm; ngoài khoảng ⇒ fail-closed
    {
     bool all = true;

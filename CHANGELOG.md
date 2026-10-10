@@ -1,5 +1,16 @@
 # Changelog · Nhật ký phiên bản
 
+## v1.1.0 — 2026-10-11
+
+**New strategy `D_V1_CAP3` — Every Signal Max 3** (`InpMode` = 8, magic 88180516): exactly the D_V1 rules, but at most
+3 open trades instead of 20. It was the research candidate previously shown on the website as "FWD-01"; it is still
+**not validated** and remains under forward testing. **The 5 existing strategies are unchanged** — regression backtests
+match v1.0.2 trade for trade.
+
+**Chiến lược mới `D_V1_CAP3` — Bắt Tín Hiệu Tối Đa 3 Lệnh** (`InpMode` = 8, magic 88180516): y hệt luật D_V1, chỉ khác
+tối đa 3 lệnh mở thay vì 20. Đây là ứng viên nghiên cứu trước đây web gọi là "FWD-01"; vẫn **chưa qua kiểm định**, đang
+kiểm định tiến cứu. **5 chiến lược cũ không đổi** — backtest hồi quy trùng từng lệnh với v1.0.2.
+
 ## v1.0.2 — 2026-09-29
 
 **Fix — cent & non-USD accounts.** Lot size is now computed from the broker's real money value per lot

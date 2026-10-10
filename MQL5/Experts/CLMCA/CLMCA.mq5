@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------------------------+
-//| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 5 chiến lược · 5 strategies     |
+//| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 6 chiến lược · 6 strategies     |
 //| Bản gốc · Official source: https://clmca.pandify.io · github.com/pandaluvly/clmca-ea |
 //| Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community. |
 //| MIT License — xem LICENSE · see LICENSE.                                            |
@@ -17,12 +17,12 @@
 //| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
 //+------------------------------------------------------------------------------------+
 #property strict
-#property version   "1.02"
+#property version   "1.10"
 #property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
 #property description "• Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
 #property description "• EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
-#property description "• 5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
+#property description "• 6 chiến lược, lệnh nào cũng có cắt lỗ · 6 strategies, every trade has a stop-loss."
 #property description "• Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
 #property description "• Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
 #property description "• Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
@@ -38,7 +38,8 @@ enum ENUM_FSR5_MODE
    C_V1_P1b = 5,  // Hồi Gần Chạm · Near-Touch Pullback (C_V1_P1b)
    C_V1_P2 = 6,   // Hồi Trong 3 Nến · 3-Bar Pullback (C_V1_P2)
    D_V1 = 4,      // Bắt Mọi Tín Hiệu · Every Signal (D_V1)
-   L07S = 7       // Mở Cửa London 7h · London Open 7AM (L07S)
+   L07S = 7,      // Mở Cửa London 7h · London Open 7AM (L07S)
+   D_V1_CAP3 = 8  // Bắt Tín Hiệu Tối Đa 3 Lệnh · Every Signal Max 3 (D_V1_CAP3)
   };
 enum ENUM_FSR_RISK_MODE
   {
@@ -1103,7 +1104,7 @@ int OnInit()
       return INIT_FAILED;
      }
    // Magic RIÊNG của EA 5 chế độ (khác EA 4 chế độ 881803xx) ⇒ chạy cạnh nhau trên cùng demo không lẫn lệnh.
-   long mode_magic[8] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515};
+   long mode_magic[9] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515, 88180516};
    g_magic = InpMagic != 0 ? InpMagic : mode_magic[g_mode];
    if((InpRiskMode == FSR_RISK_USD && !(InpRiskUsd > 0.0))
       || (InpRiskMode == FSR_RISK_PERCENT && !(InpRiskPercent > 0.0 && InpRiskPercent <= FSR_MAX_RISK_PCT)))

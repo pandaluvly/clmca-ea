@@ -1,7 +1,7 @@
-// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 c0957519dd3c).
+// BẢN PHÁT HÀNH MỘT FILE · SINGLE-FILE RELEASE — sinh bởi tools/bundle.py từ CLMCA.mq5 (sha256 cbce5572627f).
 // Sửa mã ở MQL5/Experts/CLMCA/, rồi chạy lại tools/bundle.py.
 //+------------------------------------------------------------------------------------+
-//| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 5 chiến lược · 5 strategies     |
+//| CLMCA — "Có Làm Mới Có Ăn" · Pandify · XAUUSD M15 · 6 chiến lược · 6 strategies     |
 //| Bản gốc · Official source: https://clmca.pandify.io · github.com/pandaluvly/clmca-ea |
 //| Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community. |
 //| MIT License — xem LICENSE · see LICENSE.                                            |
@@ -19,18 +19,18 @@
 //| If you modify the code, rename the EA and change the magic; do not call it CLMCA.  |
 //+------------------------------------------------------------------------------------+
 #property strict
-#property version   "1.02"
+#property version   "1.10"
 #property copyright   "Có Làm Mới Có Ăn · Pandify"
 #property link        "https://clmca.pandify.io"
 #property description "• Mã nguồn · Source: github.com/pandaluvly/clmca-ea"
 #property description "• EA miễn phí cho XAUUSD khung M15 · Free EA for XAUUSD M15."
-#property description "• 5 chiến lược, lệnh nào cũng có cắt lỗ · 5 strategies, every trade has a stop-loss."
+#property description "• 6 chiến lược, lệnh nào cũng có cắt lỗ · 6 strategies, every trade has a stop-loss."
 #property description "• Chưa đủ căn cứ để chạy tiền thật. Hãy chạy demo trước · Not proven for real money. Demo first."
 #property description "• Chỉ dùng số tiền bạn chấp nhận mất · Only risk money you can afford to lose."
 #property description "• Cảm ơn cộng đồng Cần Cù Bù Siêng Năng · Thanks to the Cần Cù Bù Siêng Năng community."
 
 #include <Trade\Trade.mqh>
-// ===== BEGIN CLMCACore.mqh (sha256 2c8fd999f3e3) — sinh tự động, đừng sửa tay =====
+// ===== BEGIN CLMCACore.mqh (sha256 641138c3523b) — sinh tự động, đừng sửa tay =====
 //+------------------------------------------------------------------------------------+
 //| CLMCACore.mqh — hàm thuần (chỉ báo, tín hiệu, thang SL) cho CLMCA · Pandify           |
 //| Không I/O, không đặt lệnh. MIT License. Bản gốc: github.com/pandaluvly/clmca-ea      |
@@ -551,6 +551,8 @@ string Fsr_StrategyVersion(const int variant)
 #define FSR_MODE_C_V1_P1B   5
 #define FSR_MODE_C_V1_P2    6
 #define FSR_MODE_L07S       7
+#define FSR_MODE_D_V1_CAP3  8   // D_V1 y hệt, chỉ khác trần 3 lệnh mở (research RL-14)
+#define FSR_MAX_OPEN_D_CAP3 3
 // §2a P1b: "gần chạm" = c2.low ≤ ema34_high(c2) + 0.5·ATR14(c2). CHỐT, không dò.
 #define FSR_P1B_NEAR_K      0.5
 // §2b P2: pullback ở ít nhất một trong c2, c3, c4.
@@ -562,13 +564,13 @@ string Fsr_StrategyVersion(const int variant)
 bool Fsr5_ModeValid(const int mode)
   {
    return mode == FSR_MODE_C_V1 || mode == FSR_MODE_D_V1 || mode == FSR_MODE_C_V1_P1B
-          || mode == FSR_MODE_C_V1_P2 || mode == FSR_MODE_L07S;
+          || mode == FSR_MODE_C_V1_P2 || mode == FSR_MODE_L07S || mode == FSR_MODE_D_V1_CAP3;
   }
 
-// Mọi mode trừ D_V1 dùng thang C + trần 3 lệnh.
+// Mọi mode trừ D_V1 / D_V1_CAP3 dùng thang C + trần 3 lệnh.
 int Fsr5_ModeVariant(const int mode)
   {
-   return mode == FSR_MODE_D_V1 ? FSR_VARIANT_D : FSR_VARIANT_C;
+   return (mode == FSR_MODE_D_V1 || mode == FSR_MODE_D_V1_CAP3) ? FSR_VARIANT_D : FSR_VARIANT_C;
   }
 
 string Fsr5_ModeName(const int mode)
@@ -578,6 +580,7 @@ string Fsr5_ModeName(const int mode)
    if(mode == FSR_MODE_C_V1_P1B) return "C_V1_P1b";
    if(mode == FSR_MODE_C_V1_P2) return "C_V1_P2";
    if(mode == FSR_MODE_L07S) return "L07S";
+   if(mode == FSR_MODE_D_V1_CAP3) return "D_V1_CAP3";
    return "INVALID";
   }
 
@@ -588,10 +591,11 @@ string Fsr5_ModeVersion(const int mode)
    if(mode == FSR_MODE_C_V1_P1B) return "cand_c_step_r_v1_p1b";
    if(mode == FSR_MODE_C_V1_P2) return "cand_c_step_r_v1_p2";
    if(mode == FSR_MODE_L07S) return "l07s_v1";
+   if(mode == FSR_MODE_D_V1_CAP3) return "cand_d_step_r_v1_cap3";
    return "invalid";
   }
 
-// Cả 5 mode đều là v1: ngưỡng = K × ATR14(c1), đúng phép tính của C_V1 (L07S chỉ dùng min_slope + stop_buf).
+// Cả 6 mode đều là v1: ngưỡng = K × ATR14(c1), đúng phép tính của C_V1 (L07S chỉ dùng min_slope + stop_buf).
 bool Fsr5_ModeThresholds(const int mode, const double atr_c1, double &min_dragon, double &min_slope, double &stop_buf)
   {
    if(!Fsr5_ModeValid(mode))
@@ -601,13 +605,15 @@ bool Fsr5_ModeThresholds(const int mode, const double atr_c1, double &min_dragon
       stop_buf = 0.0;
       return false;
      }
-   return Fsr_ModeThresholds(mode == FSR_MODE_D_V1 ? FSR_MODE_D_V1 : FSR_MODE_C_V1, atr_c1,
+   return Fsr_ModeThresholds((mode == FSR_MODE_D_V1 || mode == FSR_MODE_D_V1_CAP3) ? FSR_MODE_D_V1 : FSR_MODE_C_V1, atr_c1,
                              min_dragon, min_slope, stop_buf);
   }
 
-//--- Trần lệnh mở theo mode (C 3, D 20).
+//--- Trần lệnh mở theo mode: D_V1_CAP3 = 3, còn lại theo variant (C 3, D 20).
 int Fsr5_MaxOpen(const int mode)
   {
+   if(mode == FSR_MODE_D_V1_CAP3)
+      return FSR_MAX_OPEN_D_CAP3;
    return Fsr_MaxOpen(Fsr5_ModeVariant(mode));
   }
 
@@ -697,7 +703,8 @@ enum ENUM_FSR5_MODE
    C_V1_P1b = 5,  // Hồi Gần Chạm · Near-Touch Pullback (C_V1_P1b)
    C_V1_P2 = 6,   // Hồi Trong 3 Nến · 3-Bar Pullback (C_V1_P2)
    D_V1 = 4,      // Bắt Mọi Tín Hiệu · Every Signal (D_V1)
-   L07S = 7       // Mở Cửa London 7h · London Open 7AM (L07S)
+   L07S = 7,      // Mở Cửa London 7h · London Open 7AM (L07S)
+   D_V1_CAP3 = 8  // Bắt Tín Hiệu Tối Đa 3 Lệnh · Every Signal Max 3 (D_V1_CAP3)
   };
 enum ENUM_FSR_RISK_MODE
   {
@@ -1762,7 +1769,7 @@ int OnInit()
       return INIT_FAILED;
      }
    // Magic RIÊNG của EA 5 chế độ (khác EA 4 chế độ 881803xx) ⇒ chạy cạnh nhau trên cùng demo không lẫn lệnh.
-   long mode_magic[8] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515};
+   long mode_magic[9] = {0, 0, 0, 88180511, 88180512, 88180513, 88180514, 88180515, 88180516};
    g_magic = InpMagic != 0 ? InpMagic : mode_magic[g_mode];
    if((InpRiskMode == FSR_RISK_USD && !(InpRiskUsd > 0.0))
       || (InpRiskMode == FSR_RISK_PERCENT && !(InpRiskPercent > 0.0 && InpRiskPercent <= FSR_MAX_RISK_PCT)))

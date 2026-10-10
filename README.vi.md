@@ -19,7 +19,7 @@ khai, kể cả các phép kiểm bị trượt. Cảm ơn cộng đồng Cần 
   - `SHA256SUMS` — mã kiểm tra để so file tải về
 - **Nhật ký phiên bản:** [CHANGELOG.md](CHANGELOG.md)
 
-## 5 chiến lược (`InpMode`)
+## 6 chiến lược (`InpMode`)
 | Mode | Tên | Điểm vào | Lệnh mở tối đa | Thang dời SL |
 |---|---|---|---|---|
 | `C_V1` | Nhịp Hồi Chuẩn | Pullback về Dragon EMA34/EMA89, nến xanh xác nhận, lọc ADX · H1/H4 · độ rộng Dragon · slope (ngưỡng × ATR14) | 3 | lời 2R ⇒ SL về hoà vốn, 3R ⇒ +1R, 4R ⇒ +2R… |
@@ -27,6 +27,7 @@ khai, kể cả các phép kiểm bị trượt. Cảm ơn cộng đồng Cần 
 | `C_V1_P2` | Hồi Trong 3 Nến | như C_V1, pullback ở bất kỳ nến nào trong 3 nến trước tín hiệu | 3 | như C_V1 |
 | `D_V1` | Bắt Mọi Tín Hiệu | như C_V1, mỗi tín hiệu một lệnh | 20 | lời 1R ⇒ hoà vốn, 3R ⇒ +1R… |
 | `L07S` | Mở Cửa London 7h | nến M15 lúc 07:00 UTC (T2–T6), H4 trên EMA34 và EMA89, slope đủ | 3 | như C_V1 |
+| `D_V1_CAP3` | Bắt Tín Hiệu Tối Đa 3 Lệnh | y như D_V1 | **3** | như D_V1 |
 
 Chỉ LONG. Mọi lệnh mở đều kèm **Stop-Loss cứng** = EMA89 − 0,956·ATR14. Không TP, không martingale, không grid.
 Sau 2 lệnh thua trong một ngày (UTC), EA ngừng vào lệnh mới tới hết ngày.
@@ -48,7 +49,7 @@ Trading. Có thể nạp cài đặt sẵn: tab Inputs → **Load** → `CLMCA_<
 ## Input (đúng như hộp Inputs của MT5)
 | Nhóm | Input (nhãn trong MT5) | Biến | Mặc định | Ý nghĩa |
 |---|---|---|---|---|
-| 1. Chiến lược | Chiến lược · Strategy | `InpMode` | Nhịp Hồi Chuẩn (C_V1) | chọn 1 trong 5 chiến lược |
+| 1. Chiến lược | Chiến lược · Strategy | `InpMode` | Nhịp Hồi Chuẩn (C_V1) | chọn 1 trong 6 chiến lược |
 | 2. Rủi ro | Rủi ro theo · Risk by | `InpRiskMode` | Số tiền $ | rủi ro mỗi lệnh theo $ cố định hay % số dư |
 | | Lỗ tối đa $ · Max loss $ | `InpRiskUsd` | 50 | số $ mất nếu chạm cắt lỗ (chế độ $); tối đa 2% số dư |
 | | Lỗ tối đa % · Max loss % | `InpRiskPercent` | 0,1 | % số dư mất nếu chạm cắt lỗ (chế độ %), 0,01–2 |
